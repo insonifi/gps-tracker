@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "author": "Andrey Panteleyev",
   "dependencies": {
-    "xml": "",
+    "express": "",
+    "xmlbuilder": "",
     "node-zip": ""
   },
   "devDependencies": {}

@@ -1,6 +1,5 @@
 var net = require('net');
 var nmea = require('./nmea.js');
-var xml = require('xml');
 var track = require('./kml_track.js');
 
 var server = net.createServer(function(c) { //'connection' listener
@@ -14,8 +13,8 @@ var server = net.createServer(function(c) { //'connection' listener
 		var lines = string.split('\n');
 		for (var i = 0; i < lines.length; i++) {
 			var line = lines[i];
+			console.info('> ' + line);
 			if (line[0] == '$') {
-				console.info(line);
 				var gps_msg = nmea.parse(line);
 				if (gps_msg.isValid) {
 					track.add(gps_msg);
@@ -23,10 +22,10 @@ var server = net.createServer(function(c) { //'connection' listener
 				}
 			}
 			if (line == 'kml') {
-				console.log(track.kml());
+				console.log('<' + track.kml());
 			}
 			if (line == 'maplink') {
-				console.log(track.maplink());
+				console.log('<' + track.maplink());
 			}
 			if (line == 'dump_kmz') {
 				dump_kmz();
