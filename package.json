@@ -1,0 +1,11 @@
+{
+  "name": "gps-tracker",
+  "description": "Receive GPS coordinates sent by mobile GPS modules",
+  "version": "0.0.1",
+  "author": "Andrey Panteleyev",
+  "dependencies": {
+    "xml": "",
+    "node-zip": ""
+  },
+  "devDependencies": {}
+}
