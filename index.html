@@ -1,0 +1,111 @@
+<html>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
+	<link type="text/css" href="./jquery-simple-datetimepicker/jquery.simple-dtpicker.css" rel="stylesheet" />
+	<link type="text/css" href="./strike4/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
+	<link type="text/css" href="./strike4/query-table.css" rel="stylesheet" />
+	<script>
+		var socket = io.connect('http://localhost');
+		socket.on('handshake', function (data) {
+			console.log(data.welcome);
+			showString(data.welcome);
+		});
+		socket.on('done', function (count) {
+			showString('Found ' + count);
+			setTimeout(function () {
+				$('#accordion').accordion('refresh');
+			}, 500);
+		});
+		socket.on('waypoint', function (data) {
+			/*msgString = new String;
+			for (property in data) {
+				msgString += property + ': ' + data[property] + ',';		
+			}
+			showString(msgString);*/
+			if(undefined != data) 
+				showWaypoint(data);
+		});
+		function query() {
+			flushWaypoints();
+			var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
+			var timeoffset = (new Date).getTimezoneOffset() / 60
+			var strStartDate = document.querySelector('#start-date').value;
+			var arStartDate = re.exec(strStartDate);
+			var strEndDate = document.querySelector('#end-date').value;
+			var arEndDate = re.exec(strEndDate);
+			var startDate = new Date(Date.UTC(arStartDate[5], --arStartDate[4],
+				arStartDate[3],  timeoffset + parseInt(arStartDate[1]), arStartDate[2]));
+			var endDate = new Date(Date.UTC(arEndDate[5], --arEndDate[4],
+				arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
+			console.info('Query  %s ... %s', startDate, endDate);
+			socket.emit('query', {start: startDate.valueOf(), end: endDate.valueOf()});
+		}
+		function showString(message, colr) {
+			var mBox = document.getElementById("messageBox")
+			var msg = document.createElement('div')
+			msg.innerText = message
+			msg.style.color = colr == "" ? "black" : colr
+			mBox.appendChild(msg)
+			setTimeout(function () {
+					mBox.removeChild(mBox.childNodes[0])
+				}, 3000)
+		}
+		function showWaypoint(message) {
+			var table = document.getElementById("query-table");
+			var row = table.insertRow(-1);
+			row.id = message.gps_timestamp;
+			row.classList.add('q-row');
+			$(row).effect('slide');
+			var time = row.insertCell(-1);
+			time.innerText = (new Date(parseInt(message.gps_timestamp))).toLocaleString();
+			time.classList.add('q-time');
+			var address = row.insertCell(-1);
+			address.innerText = message.address;
+			address.classList.add('q-address');
+			var speed = row.insertCell(-1);
+			speed.innerText = message.kph + ' km/h';
+			speed.classList.add('q-speed');
+		}
+		function flushWaypoints() {
+			var table = document.getElementById("query-table");
+			table.innerHTML = '';
+		}
+	</script>
+	<body>
+		<div id='accordion'>
+			<h3>Database query</h3>
+			<div style='fillSpace: true;'>
+				<input type="text" id="start-date">
+				<input type="text" id="end-date">
+				<input type='button' id='query' value='Query'>
+				<table id='query-table'>
+				</table>
+			</div>
+			<h3>Realtime</h3>
+			<div></div>
+		</div>
+		<div id='messageBox'></div>
+		<script type="text/javascript">
+			$(function(){
+				var date = new Date;
+				var yesterDate = date.getFullYear() + '-'
+					+ (date.getMonth()+1) + '-' + (date.getDate()-1)
+					+ ' ' + date.getHours() + ':' + date.getMinutes();
+				//console.log(currentDate)
+				$('#start-date').appendDtpicker({
+					dateFormat: 'h:mm D.M.YYYY',
+					current: yesterDate
+				}).addClass('ui-spinner-input');
+				$('#end-date').appendDtpicker({
+					dateFormat: 'h:mm D.M.YYYY'
+				}).addClass('ui-spinner-input');
+				$('#query').button().click(query);
+				$('#accordion').accordion();
+
+			});
+		</script>
+	</body>
+</html>
+

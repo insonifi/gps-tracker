@@ -1,0 +1,18 @@
+.q-row {
+	animation-duration: 3s;
+	animation-name: slidein;
+}
+.q-row:hover {background: #fff0c8; border-bottom: #676565 2px dotted;}
+.q-time {color: black; padding-right: 0.5em}
+.q-address {color: grey; padding-left: 0.5em;border-left: #676565 1px dotted;}
+.q-speed {padding-left: 1em; color: grey;}
+
+ 
+@keyframes slidein {
+  from {
+    margin-left: 100%;
+  }
+  to {
+    margin-left: 0%;
+  }
+}
