@@ -1,0 +1,29 @@
+.q-table {width: 100%}
+.q-row {
+	animation-duration: 3s;
+	animation-name: slidein;
+}
+.q-row:hover {background: #fff0c8; border-bottom: #676565 2px dotted;}
+.q-time {border: #df7611; color: black; padding-right: 0.5em}
+.q-time-now {font-size: smaller; border: #df7611; color: grey; padding-right: 0.5em}
+.q-address {color: grey; padding-left: 2em; border-left: #676565 1px dotted;}
+.q-speed {border: #676565; padding-left: 1em; color: grey;}
+.q-speed-now {
+	font-size: larger;
+	border: #676565 solid;
+	border-radius: 0.4em;
+	padding: 0.3em;
+	min-width: 5em;
+}
+.info {padding: 1em;}
+.u-table:last-child {visibility: visibile}
+
+ 
+@keyframes slidein {
+  from {
+    margin-left: 100%;
+  }
+  to {
+    margin-left: 0%;
+  }
+}
