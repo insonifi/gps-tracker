@@ -38,19 +38,24 @@ Proto.updateTracklist = function(changes) {
 		if (changes.remove.length > 0) {
 			client.srem(['tracklist'].concat(changes.remove), error);
 		}
-		this.getList('server');
+		this.getList({'client': 'server'});
 	}
 }
-Proto.getList = function(dst) {
+Proto.getList = function(request) {
+	var dst = request.client;
+	var client_id = request.socket_id;
 	console.log('[redis]'.grey, dst, 'requested tracking list');
 	client.smembers('tracklist', function (err, list) {
 		if (err) console.info('[redis]'.grey, 'error'.red);
 		console.info('[redis]'.grey, 'found', list.length, 'in tracking list');
-		Proto.emit('tracklist-' + dst, list);
+		Proto.emit('tracklist-' + dst, {'socket_id': client_id, 'list': list});
 	});
 }
 
-Proto.query = function(begin, end) {//must introduce query by id
+Proto.query = function(request) {//must introduce query by id
+	var begin = request.begin;
+	var end = request.end;
+	var client_id = request.socket_id;
 	console.log('[redis]'.grey, 'Query', begin, '..', end);
 	client.zrangebyscore(['timestamps', begin, end], function (err, replies) {
 		if (undefined != replies) {
@@ -58,13 +63,14 @@ Proto.query = function(begin, end) {//must introduce query by id
 			replies.forEach(function (key, i) {
 				client.hgetall('waypoints:' + key, function(err, hash) {
 					//console.log('[redis]', 'hgetall got'.grey, Proto.result.length);
-					Proto.emit('result', hash);
+					Proto.emit('result', {'socket_id': client_id, 'result': hash});
 				});
 			});
 			//console.log('[redis], 'zrangebyscore got'.grey, Proto.result.length);
 			//Proto.emit('result', Proto.result);
 		}
-		Proto.emit('done', replies.length == undefined ? 0 : replies.length);
+		var count = replies.length == undefined ? 0 : replies.length;
+		Proto.emit('count', {'socket_id': client_id, 'count': count});
 	});
 }
 

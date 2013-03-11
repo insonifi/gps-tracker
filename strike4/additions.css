@@ -1,24 +1,29 @@
-.q-table {width: 100%}
-.q-row {
-	animation-duration: 3s;
-	animation-name: slidein;
+.q-table {width: 100%;}
+.q-row {}
+.q-row:hover {background: #ffffc8;}
+.q-time {border: #df7611; color: black; max-width: 3.2em; text-align: center;}
+.q-time-now {
+	font-size: smaller;
+	border: #df7611;
+	color: grey;
+	padding-right: 0.5em;
+	text-align: center;
+	max-width: 3.2em;
 }
-.q-row:hover {background: #fff0c8; border-bottom: #676565 2px dotted;}
-.q-time {border: #df7611; color: black; padding-right: 0.5em; width: 13em;}
-.q-time-now {font-size: smaller; border: #df7611; color: grey; padding-right: 0.5em}
-.q-address {color: grey; padding-left: 2em; border-left: #676565 1px dotted;}
-.q-speed {border: #676565; padding-left: 1em; color: grey; width: 7em; text-align: right;}
+.q-address {color: grey; padding-left: 1em; border-left: #676565 1px dotted;}
+.q-address-now {color: grey; padding-left: 1em;}
+.q-speed {border: #676565; padding-left: 1em; color: grey; max-width: 7em; text-align: right;}
 .q-speed-now {
 	font-size: larger;
-	border: #676565 solid;
+	border: #efe9e6 solid;
 	border-radius: 0.4em;
-	padding: 0.3em;
-	min-width: 5em;
-	position: absolute;
-	left: 80%;
-	top: 6%;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	width: 4em;
+	text-align: center;
+	display: inline-block;
 }
-.info {padding: 1em;}
+.info {}
 .u-table {width: 100%}
 input {
 	border: 1px solid #efe9e6;

@@ -12,46 +12,62 @@
 			console.log(data.welcome);
 			$('#info').info('update', data.welcome);
 		});
-		socket.on('done', function (count) {
+		//query finished
+		socket.on('count', function (count) {
 			console.log('Found ' + count);
 			$('#info').info('update', 'Found ' + count);
 			setTimeout(function () {
 				$('#tabs').tabs('refresh');
 			}, 500);
 		});
+		//display server time
 		socket.on('clock', function (time) {
 			$('#clock').text(time);
 		});
+		//query
 		socket.on('query-waypoint', function (data) {
 			console.info(data);
 			if(undefined != data) 
 				showWaypoint(data, 'query-table');
 		});
+		//got new live waypoint
 		socket.on('update-waypoint', function (data) {
 			console.info(data);
 			if(undefined != data)  {
 				var message = document.createElement('div');
-				
+				message.classList.add('q-row');
+				//time
 				var time = document.createElement('span');
-				time.innerText = (new Date(data.gps_timestamp).toLocaleTimeString());
+				var g_time = new Date(data.gps_timestamp);
+				time.textContent = g_time.getHours() + ':' + g_time.getMinutes();;
 				time.classList.add('q-time-now');
 				message.appendChild(time);
-				
-				var address = document.createElement('span');
-				address.innerText = data.address;
-				address.classList.add('q-address');
-				message.appendChild(address);
-				
+				//speed
+				var kphArr = data.kph.split('.');
 				var speed = document.createElement('span');
 				speed.classList.add('q-speed-now');
-				speed.innerText = data.kph;
+				var integer = document.createElement('span');
+				integer.style.fontSize = '1.2em';
+				integer.textContent = kphArr[0];
+				var fraction = document.createElement('span');
+				fraction.style.fontSize = '0.6em';
+				fraction.textContent = kphArr[1];
+				speed.appendChild(integer);
+				speed.appendChild(fraction);
 				message.appendChild(speed);
+				//address
+				var address = document.createElement('span');
+				address.textContent = data.address;
+				address.classList.add('q-address-now');
+				message.appendChild(address);
+				//display message in info box
 				$('#info').info('update', message.outerHTML, 'update');
-				
+				//show new way point in table
 				showWaypoint(data, 'updates-table');
 				$('#tabs').tabs('refresh');
 			}
 		});
+		//got tracked modules list
 		socket.on('tracklist', function (list) {
 				renderList(list);
 		});
@@ -70,7 +86,7 @@
 			console.info('Query  %s ... %s', startDate, endDate);
 			socket.emit('query', {start: startDate.valueOf(), end: endDate.valueOf()});
 		}
-
+		//render way point in corresponding table
 		function showWaypoint(message, tableName) {
 			var table = document.getElementById(tableName);
 			var row = document.createElement('tr');
@@ -82,18 +98,19 @@
 				if(table.childNodes.length > 10) { //limit to last 10 updates
 					table.removeChild(table.firstChild);
 				}
-				time.innerText = g_time.toLocaleTimeString();
+				time.textContent = g_time.getHours() + ':' + g_time.getMinutes();
 			} else {
-				time.innerText = g_time.toLocaleString();
+				time.innerHTML = g_time.getDate() + '.' + (g_time.getMonth()+1) + '.' + g_time.getFullYear()
+					+ ' <b>' + g_time.getHours() + ':' + g_time.getMinutes() + '</b>';
 			}
 			time.classList.add('q-time');
 			
 			var address = row.insertCell(-1);
-			address.innerText = message.address;
+			address.textContent = message.address;
 			address.classList.add('q-address');
 			
 			var speed = row.insertCell(-1);
-			speed.innerText = message.kph + ' km/h';
+			speed.textContent = message.kph + ' km/h';
 			speed.classList.add('q-speed');
 			
 			table.appendChild(row);
@@ -237,10 +254,10 @@
 				$('#start-date').appendDtpicker({
 					dateFormat: 'h:mm D.M.YYYY',
 					current: yesterDate
-				}).addClass('ui-spinner-input');
+				})
 				$('#end-date').appendDtpicker({
 					dateFormat: 'h:mm D.M.YYYY'
-				}).addClass('ui-spinner-input');
+				})
 			});
 			$(function () {
 				$('#query').button().click(query);

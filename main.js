@@ -5,16 +5,18 @@ var colors = require('colors'),
 	redis = require('./redis_db'),
 	express = require('express'),
 	app = express(),
-	socketSessions = new Object,
+	socket_session = new Object,
+	client_socket,
 	server = require('http').createServer(app),
 	io = require('socket.io').listen(server),
 	vId = null;
 
 /************************ Update tracking list ************************/
 //refresh tracked id list
-redis.getList('server');
+redis.getList({client: 'server'});
 //server tracked id list
-redis.on('tracklist-server', function (list) {
+redis.on('tracklist-server', function (response) {
+	var list = response.list
 	queue.isTracked = new Object;
 	console.log('[GPS]'.grey, 'updating tracking list:', list);
 	for (var i = 0; i < list.length; i++) {
@@ -53,37 +55,52 @@ io.set('transports', [
 setInterval(function () {
 	io.sockets.emit('clock', (new Date()).toISOString().slice(11,16));
 }, 60000);
+queue.on('send-update', function (data) {
+	io.sockets.emit('update-waypoint', data);
+});
 io.sockets.on('connection', function (socket) {
-	socket.emit('handshake', { welcome: 'GPS Tracker 0.1' });
-	queue.on('send-client', function (data) {
-		socket.emit('update-waypoint', data);
+	if (socket.id in socket_session) {
+		return
+	}
+	var global_socket = socket;
+	socket_session[socket.id] = socket;
+	global_socket.emit('handshake', { welcome: 'GPS Tracker 0.1' });
+	global_socket.on('disconnect', function () {
+		delete socket_session[this.id];
 	});
 //query processing
-	socket.on('query', function (data) {
-		redis.query(data.start, data.end);
+	global_socket.on('query', function (data) {
+		redis.query({'socket_id': socket.id, 'module_id': '', 'begin': data.start, 'end': data.end});
 	});
-	redis.on('result', function(result) {
-		socket.emit('query-waypoint', result);
-	});
-	redis.on('done', function(found) {
-		socket.emit('done', found);
-	});
+
 //update tracklist
-	socket.on('update-tracklist', function (changes) {
+	global_socket.on('update-tracklist', function (changes) {
 		redis.updateTracklist(changes);
 	});
 //get tracklist
-	socket.on('get-tracklist', function (changes) {
-		redis.getList('client');
+	global_socket.on('get-tracklist', function () {
+		redis.getList({'client': 'client', 'socket_id': socket.id});
 	});
-	redis.on('tracklist-client', function (list) {
-		socket.emit('tracklist', list);
-	});
+
 });
+
+	redis.on('result', function(response) {
+		client_socket = socket_session[response.socket_id];
+		client_socket.emit('query-waypoint', response.result);
+	});
+	redis.on('count', function(response) {
+		client_socket = socket_session[response.socket_id];
+		client_socket.emit('count', response.count);
+	});
+	redis.on('tracklist-client', function (response) {
+		client_socket = socket_session[response.socket_id];
+		client_socket.emit('tracklist', response.list);
+	});
 
 /*************************** GPS server *******************************/					
 var serverGPS = net.createServer(function(c) { //'connection' listener
 	console.log('[GPS]'.grey, 'Connection established');
+	queue.notProcessing = true;
 	c.on('end', function() {
 			console.log('[GPS]'.grey, vId, 'disconnected'.grey);
 			vId = null;
