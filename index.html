@@ -5,30 +5,58 @@
 	<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
 	<link type="text/css" href="./jquery-simple-datetimepicker/jquery.simple-dtpicker.css" rel="stylesheet" />
 	<link type="text/css" href="./strike4/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
-	<link type="text/css" href="./strike4/query-table.css" rel="stylesheet" />
+	<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
 	<script>
-		var socket = io.connect('http://localhost');
+		var socket = io.connect('http://phoenix.mpe.lv');
 		socket.on('handshake', function (data) {
 			console.log(data.welcome);
-			showString(data.welcome);
+			$('#info').info('update', data.welcome);
 		});
 		socket.on('done', function (count) {
-			showString('Found ' + count);
+			console.log('Found ' + count);
+			$('#info').info('update', 'Found ' + count);
 			setTimeout(function () {
-				$('#accordion').accordion('refresh');
+				$('#tabs').tabs('refresh');
 			}, 500);
 		});
-		socket.on('waypoint', function (data) {
-			/*msgString = new String;
-			for (property in data) {
-				msgString += property + ': ' + data[property] + ',';		
-			}
-			showString(msgString);*/
+		socket.on('clock', function (time) {
+			$('#clock').text(time);
+		});
+		socket.on('query-waypoint', function (data) {
+			console.info(data);
 			if(undefined != data) 
-				showWaypoint(data);
+				showWaypoint(data, 'query-table');
+		});
+		socket.on('update-waypoint', function (data) {
+			console.info(data);
+			if(undefined != data)  {
+				var message = document.createElement('div');
+				
+				var time = document.createElement('span');
+				time.innerText = (new Date(data.gps_timestamp).toLocaleTimeString());
+				time.classList.add('q-time-now');
+				message.appendChild(time);
+				
+				var address = document.createElement('span');
+				address.innerText = data.address;
+				address.classList.add('q-address');
+				message.appendChild(address);
+				
+				var speed = document.createElement('span');
+				speed.classList.add('q-speed-now');
+				speed.innerText = data.kph;
+				message.appendChild(speed);
+				$('#info').info('update', message.outerHTML, 'update');
+				
+				showWaypoint(data, 'updates-table');
+				$('#tabs').tabs('refresh');
+			}
+		});
+		socket.on('tracklist', function (list) {
+				renderList(list);
 		});
 		function query() {
-			flushWaypoints();
+			flushTable('query-table');
 			var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
 			var timeoffset = (new Date).getTimezoneOffset() / 60
 			var strStartDate = document.querySelector('#start-date').value;
@@ -42,51 +70,163 @@
 			console.info('Query  %s ... %s', startDate, endDate);
 			socket.emit('query', {start: startDate.valueOf(), end: endDate.valueOf()});
 		}
-		function showString(message, colr) {
-			var mBox = document.getElementById("messageBox")
-			var msg = document.createElement('div')
-			msg.innerText = message
-			msg.style.color = colr == "" ? "black" : colr
-			mBox.appendChild(msg)
-			setTimeout(function () {
-					mBox.removeChild(mBox.childNodes[0])
-				}, 3000)
-		}
-		function showWaypoint(message) {
-			var table = document.getElementById("query-table");
-			var row = table.insertRow(-1);
+
+		function showWaypoint(message, tableName) {
+			var table = document.getElementById(tableName);
+			var row = document.createElement('tr');
 			row.id = message.gps_timestamp;
-			row.classList.add('q-row');
-			$(row).effect('slide');
+			
 			var time = row.insertCell(-1);
-			time.innerText = (new Date(parseInt(message.gps_timestamp))).toLocaleString();
+			var g_time = new Date(parseInt(message.gps_timestamp));
+			if(tableName == 'updates-table') {
+				if(table.childNodes.length > 10) { //limit to last 10 updates
+					table.removeChild(table.firstChild);
+				}
+				time.innerText = g_time.toLocaleTimeString();
+			} else {
+				time.innerText = g_time.toLocaleString();
+			}
 			time.classList.add('q-time');
+			
 			var address = row.insertCell(-1);
 			address.innerText = message.address;
 			address.classList.add('q-address');
+			
 			var speed = row.insertCell(-1);
 			speed.innerText = message.kph + ' km/h';
 			speed.classList.add('q-speed');
+			
+			table.appendChild(row);
 		}
-		function flushWaypoints() {
-			var table = document.getElementById("query-table");
-			table.innerHTML = '';
+		function flushTable(tableName) {
+			var table = document.getElementById(tableName);
+			while (table.lastChild) {
+				table.removeChild(table.lastChild);
+			}
 		}
+		function updateList() {
+			var table = document.getElementById('trackedlist-table');
+			var changes = {
+				add: new Array,
+				remove: new Array
+			}
+			var id;
+			for(var i = 0; i < table.childNodes.length; i++) {
+				node = table.childNodes[i];
+				id = node.querySelector('input').value;
+				if ('' == id) continue;
+				if('hidden' == node.style.visibility) {
+					changes.remove.push(id);
+				} else {
+					changes.add.push(id);
+				}
+			}
+			console.info('add:',changes.add, 'remove', changes.remove);
+			socket.emit('update-tracklist', changes);
+			getList();
+		}
+		function getList() {
+			socket.emit('get-tracklist');
+		}
+		function renderList(list) {
+			flushTable('trackedlist-table');
+			var item;
+			while (item = list.pop()) {
+				appendList(item);
+			}
+		};
+		function appendList(item) {
+			var table = document.getElementById('trackedlist-table');
+			var row = document.createElement('tr');
+			var cell = row.insertCell(-1);
+			//text field
+			var input = document.createElement('input');
+			input.value = (typeof(item) == 'object' ? '' : item);
+			//remove button
+			var button = document.createElement('input');
+			button.type = 'button'; button.value = '-';
+			//assemble
+			cell.appendChild(input);
+			cell.appendChild(button);
+			table.appendChild(row);
+			$(function () {
+				$('td > input[type=\'button\']').button().click(removeRow);
+			});
+		}
+		function removeRow() {
+			var row = this.parentNode.parentNode;
+			row.style.visibility = 'hidden';
+		}
+		(function( $ ) {
+			var methods = {
+				init: function( options ) {
+					var $this = this;
+					return this.each(function () {
+						$this.settings = $.extend( {
+							'timeout': 10
+						}, options);
+						$this.attr('timeout', $this.settings.timeout * 1000);
+						$this.addClass('info');
+					})
+				},
+				show: function() {},
+				hide: function() {},
+				update: function( message, type, time ) {
+					var $this = this;
+					return this.each(function () {
+						if($this.hasClass('ui-state-error')) {
+							$this.removeClass('ui-state-error');
+						}
+						if(type == 'update') {
+							window.clearTimeout(window.infoTimer);
+							window.infoTimer = setTimeout(function () {
+								$this.addClass('ui-state-error');
+							}, $this.attr('timeout'))
+						}
+						$this.effect('highlight');
+						$this.html(message);
+					});
+				}
+			}
+			$.fn.info = function( method ) {		
+				if ( methods[ method ] ) {
+					return methods[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
+				} else if ( typeof method === 'object' || ! method ) {
+					return methods.init.apply( this, arguments );
+				} else {
+					$.error( 'Method ' +  method + ' does not exist on jQuery.info' );
+				}
+			}
+		}) ( jQuery );
 	</script>
 	<body>
-		<div id='accordion'>
-			<h3>Database query</h3>
-			<div style='fillSpace: true;'>
+		<table class='q-table'>
+			<tr>
+				<td><div id='info'></div></td>
+				<td style='width: 5em'><div id='clock'></div></td>
+			</tr>
+		</table>
+		<div id='tabs'>
+			<ul>
+				<li><a href='#tabs-updates'>Now</a></li>
+				<li><a href='#tabs-query'>Query</a></li>
+				<li><a href='#tabs-settings'>Settings</a></li>
+			</ul>
+			<div id='tabs-query'>
 				<input type="text" id="start-date">
 				<input type="text" id="end-date">
 				<input type='button' id='query' value='Query'>
-				<table id='query-table'>
-				</table>
+				<table id='query-table' class='q-table'></table>
 			</div>
-			<h3>Realtime</h3>
-			<div></div>
+			<div id='tabs-updates'>
+				<table id='updates-table' class='u-table'></table>
+			</div>
+			<div id='tabs-settings'>
+				<table id='trackedlist-table'></table>
+				<input type='button' id='update-list' value='Update'>
+				<input type='button' id='append-list' value='+'>
+			</div>
 		</div>
-		<div id='messageBox'></div>
 		<script type="text/javascript">
 			$(function(){
 				var date = new Date;
@@ -101,9 +241,27 @@
 				$('#end-date').appendDtpicker({
 					dateFormat: 'h:mm D.M.YYYY'
 				}).addClass('ui-spinner-input');
+			});
+			$(function () {
 				$('#query').button().click(query);
-				$('#accordion').accordion();
-
+			});
+			$(function () {
+				$('#update-list').button().click(updateList);
+			});
+			$(function () {
+				$('#append-list').button().click(appendList);
+			});
+			$(function() {
+				$('#tabs').tabs({
+					activate: function(event, ui) {
+						if('#tabs-settings' == ui.newTab.context.hash) {
+							getList();
+						}
+					}
+				});
+			});
+			$(function () {
+				$('#info').info({'timeout': 300});
 			});
 		</script>
 	</body>

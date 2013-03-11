@@ -1,12 +1,15 @@
 {
   "name": "gps-tracker",
-  "description": "Receive GPS coordinates sent by mobile GPS modules",
+  "description": "Track GPS coordinates (NMEA) fed by mobile GPS modules",
   "version": "0.0.1",
   "author": "Andrey Panteleyev",
   "dependencies": {
     "express": "",
     "xmlbuilder": "",
-    "node-zip": ""
+    "node-zip": "",
+    "socket.io": "",
+    "redis": "",
+    "hiredis": ""
   },
   "devDependencies": {}
 }

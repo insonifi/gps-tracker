@@ -4,21 +4,33 @@
 	animation-name: slidein;
 }
 .q-row:hover {background: #fff0c8; border-bottom: #676565 2px dotted;}
-.q-time {border: #df7611; color: black; padding-right: 0.5em}
+.q-time {border: #df7611; color: black; padding-right: 0.5em; width: 13em;}
 .q-time-now {font-size: smaller; border: #df7611; color: grey; padding-right: 0.5em}
 .q-address {color: grey; padding-left: 2em; border-left: #676565 1px dotted;}
-.q-speed {border: #676565; padding-left: 1em; color: grey;}
+.q-speed {border: #676565; padding-left: 1em; color: grey; width: 7em; text-align: right;}
 .q-speed-now {
 	font-size: larger;
 	border: #676565 solid;
 	border-radius: 0.4em;
 	padding: 0.3em;
 	min-width: 5em;
+	position: absolute;
+	left: 80%;
+	top: 6%;
 }
 .info {padding: 1em;}
-.u-table:last-child {visibility: visibile}
+.u-table {width: 100%}
+input {
+	border: 1px solid #efe9e6;
+	padding: 5px;
+	border-radius: 5px;
+}
 
- 
+input:focus {
+	border: 1px solid #df7611;
+	padding: 5px;
+	border-radius: 5px;
+}
 @keyframes slidein {
   from {
     margin-left: 100%;

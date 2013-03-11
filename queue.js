@@ -8,6 +8,7 @@ var notProcessing = true;
 
 googleApi.on('address', function (gps_msg) {
 	redis.addRecord(gps_msg);
+	Proto.emit('send-client', gps_msg);
 });
 
 Proto.add = function (input) {
@@ -18,20 +19,25 @@ Proto.add = function (input) {
 	}
 }
 
+
+Proto.isTracked = new Object;
+
 Proto.on('next', function () {
 	if(queue.length > 0) {
 		var string = queue.shift();
-		var gps_msg = nmea.parse(string);
+		var Id = string.slice(0, string.indexOf('$'));
+		if (!Proto.isTracked[Id]) {
+			console.error('[queue]'.grey, 'not tracking'.red, Id, '-- not processing!'.red);
+			return;
+		}
+		var gps_msg = nmea.parse(string.slice(Id.length));
 		if (gps_msg.isValid) {
-			gps_msg.id = vId;
+			gps_msg.id = Id;
 			googleApi.addressLookup(gps_msg);
-			//trigger request address event
-			//when address acquired trigger database record event
-			//record to database
 		}
 		var delay = 300 + Math.random() * 1000;//introduce some interval to avoit OVER_QUERY_LIMIT
 		setTimeout(function () {
-			console.log('[queue] ' + (new Date).toLocaleTimeString());
+			console.log('[queue]'.grey, 'process next', (new Date).toISOString());
 			Proto.emit('next');
 		}, delay);
 	} else {
