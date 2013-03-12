@@ -68,9 +68,9 @@ io.sockets.on('connection', function (socket) {
 	global_socket.on('disconnect', function () {
 		delete socket_session[this.id];
 	});
-//query processing
+//query
 	global_socket.on('query', function (data) {
-		redis.query({'socket_id': socket.id, 'module_id': '', 'begin': data.start, 'end': data.end});
+		redis.query({'socket_id': socket.id, 'module_id': data.module_id, 'begin': data.start, 'end': data.end});
 	});
 
 //update tracklist
@@ -84,18 +84,18 @@ io.sockets.on('connection', function (socket) {
 
 });
 
-	redis.on('result', function(response) {
-		client_socket = socket_session[response.socket_id];
-		client_socket.emit('query-waypoint', response.result);
-	});
-	redis.on('count', function(response) {
-		client_socket = socket_session[response.socket_id];
-		client_socket.emit('count', response.count);
-	});
-	redis.on('tracklist-client', function (response) {
-		client_socket = socket_session[response.socket_id];
-		client_socket.emit('tracklist', response.list);
-	});
+redis.on('result', function(response) {
+	client_socket = socket_session[response.socket_id];
+	client_socket.emit('query-waypoint', response.result);
+});
+redis.on('count', function(response) {
+	client_socket = socket_session[response.socket_id];
+	client_socket.emit('count', response.count);
+});
+redis.on('tracklist-client', function (response) {
+	client_socket = socket_session[response.socket_id];
+	client_socket.emit('tracklist', response.list);
+});
 
 /*************************** GPS server *******************************/					
 var serverGPS = net.createServer(function(c) { //'connection' listener

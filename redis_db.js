@@ -12,18 +12,18 @@ Proto.on('record', function() {
 });
 
 Proto.addRecord = function(gps_msg) {
-	var gps_timestamp = gps_msg.gps_timestamp.toString();
-	var key = gps_msg.id + ':' + gps_timestamp;
-	var timestamp = ['timestamps', gps_timestamp, key];
-	var modulesId = ['modules-id', gps_msg.id]; //is it necessary??
+	var timestamp = gps_msg.timestamp.toString();
+	var key = gps_msg.module_id + ':' + timestamp;
+	var timestamps = ['timestamps:' + gps_msg.module_id, timestamp, key];
+	//var modulesId = ['modules-id', gps_msg.module_id]; //is it necessary??
 	var waypoint = ['waypoints:' + key];
 	for(property in gps_msg) {
 		waypoint.push(property)
 		waypoint.push(gps_msg[property].toString())
 	}
 	client.multi()
-		.zadd(timestamp, error)
-		.sadd(modulesId, error)
+		.zadd(timestamps, error)
+		//.sadd(modulesId, error)
 		.hmset(waypoint, error)
 		.exec(error);
 	this.emit('record', true);
@@ -55,9 +55,10 @@ Proto.getList = function(request) {
 Proto.query = function(request) {//must introduce query by id
 	var begin = request.begin;
 	var end = request.end;
+	var module_id = request.module_id;
 	var client_id = request.socket_id;
-	console.log('[redis]'.grey, 'Query', begin, '..', end);
-	client.zrangebyscore(['timestamps', begin, end], function (err, replies) {
+	console.log('[redis]'.grey, 'Query', module_id, begin, '..', end);
+	client.zrangebyscore(['timestamps:' + module_id, begin, end], function (err, replies) {
 		if (undefined != replies) {
 			console.log('[redis]'.grey, 'found', replies.length);
 			replies.forEach(function (key, i) {

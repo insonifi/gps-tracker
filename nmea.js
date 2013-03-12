@@ -27,7 +27,7 @@ exports.parse = function (input) {
     var code = data.shift();
     if (code == 'GPRMC') {
 		var nmea = {}
-		nmea.gps_timestamp = (new Date(Date.UTC(
+		nmea.timestamp = (new Date(Date.UTC(
 			'20' + data[8].slice(4,6),
 			parseInt(data[8].slice(2,4)) - 1,
 			data[8].slice(0,2),
@@ -42,7 +42,7 @@ exports.parse = function (input) {
 		if (data[5] == 'W') nmea.long = -nmea.long;
 		nmea.kph = (data[6] * 0.539957).toFixed(2);
 		nmea.track = data[7];
-		nmea.timestamp = new Date();
+		//nmea.timestamp = new Date();
 		nmea.magv = data[9];
 		return nmea;
 	}

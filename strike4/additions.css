@@ -36,6 +36,14 @@ input:focus {
 	padding: 5px;
 	border-radius: 5px;
 }
+#map {
+	width: 100%;
+	height: 84%;
+	z-index: -1;
+	position: absolute;
+	top: 6em;
+	left: 0px;
+}
 @keyframes slidein {
   from {
     margin-left: 100%;

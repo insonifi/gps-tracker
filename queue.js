@@ -28,16 +28,16 @@ Proto.isTracked = new Object;
 Proto.on('next', function () {
 	if(queue.length > 0) {
 		var string = queue.shift();
-		var Id = string.slice(0, string.indexOf('$'));
+		var id = string.slice(0, string.indexOf('$'));
 		//do we track this module
-		if (!Proto.isTracked[Id]) {
-			console.error('[queue]'.grey, 'not tracking'.red, Id, '-- not processing!'.red);
+		if (!Proto.isTracked[id]) {
+			console.error('[queue]'.grey, 'not tracking'.red, id, '-- not processing!'.red);
 			return;
 		}
 		//parse GPS message
-		var gps_msg = nmea.parse(string.slice(Id.length));
+		var gps_msg = nmea.parse(string.slice(id.length));
 		if (gps_msg.isValid) {
-			gps_msg.id = Id;
+			gps_msg.module_id = id;
 			googleApi.addressLookup(gps_msg);
 		}
 		//initiate next message processing with a delay

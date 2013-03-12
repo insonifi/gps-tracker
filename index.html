@@ -1,221 +1,311 @@
+<!DOCTYPE html>
 <html>
-	<script src="/socket.io/socket.io.js"></script>
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
-	<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
-	<link type="text/css" href="./jquery-simple-datetimepicker/jquery.simple-dtpicker.css" rel="stylesheet" />
-	<link type="text/css" href="./strike4/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
-	<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
-	<script>
-		var socket = io.connect('http://phoenix.mpe.lv');
-		socket.on('handshake', function (data) {
-			console.log(data.welcome);
-			$('#info').info('update', data.welcome);
-		});
-		//query finished
-		socket.on('count', function (count) {
-			console.log('Found ' + count);
-			$('#info').info('update', 'Found ' + count);
-			setTimeout(function () {
-				$('#tabs').tabs('refresh');
-			}, 500);
-		});
-		//display server time
-		socket.on('clock', function (time) {
-			$('#clock').text(time);
-		});
-		//query
-		socket.on('query-waypoint', function (data) {
-			console.info(data);
-			if(undefined != data) 
-				showWaypoint(data, 'query-table');
-		});
-		//got new live waypoint
-		socket.on('update-waypoint', function (data) {
-			console.info(data);
-			if(undefined != data)  {
-				var message = document.createElement('div');
-				message.classList.add('q-row');
-				//time
-				var time = document.createElement('span');
-				var g_time = new Date(data.gps_timestamp);
-				time.textContent = g_time.getHours() + ':' + g_time.getMinutes();;
-				time.classList.add('q-time-now');
-				message.appendChild(time);
-				//speed
-				var kphArr = data.kph.split('.');
-				var speed = document.createElement('span');
-				speed.classList.add('q-speed-now');
-				var integer = document.createElement('span');
-				integer.style.fontSize = '1.2em';
-				integer.textContent = kphArr[0];
-				var fraction = document.createElement('span');
-				fraction.style.fontSize = '0.6em';
-				fraction.textContent = kphArr[1];
-				speed.appendChild(integer);
-				speed.appendChild(fraction);
-				message.appendChild(speed);
-				//address
-				var address = document.createElement('span');
-				address.textContent = data.address;
-				address.classList.add('q-address-now');
-				message.appendChild(address);
-				//display message in info box
-				$('#info').info('update', message.outerHTML, 'update');
-				//show new way point in table
-				showWaypoint(data, 'updates-table');
-				$('#tabs').tabs('refresh');
-			}
-		});
-		//got tracked modules list
-		socket.on('tracklist', function (list) {
-				renderList(list);
-		});
-		function query() {
-			flushTable('query-table');
-			var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
-			var timeoffset = (new Date).getTimezoneOffset() / 60
-			var strStartDate = document.querySelector('#start-date').value;
-			var arStartDate = re.exec(strStartDate);
-			var strEndDate = document.querySelector('#end-date').value;
-			var arEndDate = re.exec(strEndDate);
-			var startDate = new Date(Date.UTC(arStartDate[5], --arStartDate[4],
-				arStartDate[3],  timeoffset + parseInt(arStartDate[1]), arStartDate[2]));
-			var endDate = new Date(Date.UTC(arEndDate[5], --arEndDate[4],
-				arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
-			console.info('Query  %s ... %s', startDate, endDate);
-			socket.emit('query', {start: startDate.valueOf(), end: endDate.valueOf()});
-		}
-		//render way point in corresponding table
-		function showWaypoint(message, tableName) {
-			var table = document.getElementById(tableName);
-			var row = document.createElement('tr');
-			row.id = message.gps_timestamp;
-			
-			var time = row.insertCell(-1);
-			var g_time = new Date(parseInt(message.gps_timestamp));
-			if(tableName == 'updates-table') {
-				if(table.childNodes.length > 10) { //limit to last 10 updates
-					table.removeChild(table.firstChild);
-				}
-				time.textContent = g_time.getHours() + ':' + g_time.getMinutes();
-			} else {
-				time.innerHTML = g_time.getDate() + '.' + (g_time.getMonth()+1) + '.' + g_time.getFullYear()
-					+ ' <b>' + g_time.getHours() + ':' + g_time.getMinutes() + '</b>';
-			}
-			time.classList.add('q-time');
-			
-			var address = row.insertCell(-1);
-			address.textContent = message.address;
-			address.classList.add('q-address');
-			
-			var speed = row.insertCell(-1);
-			speed.textContent = message.kph + ' km/h';
-			speed.classList.add('q-speed');
-			
-			table.appendChild(row);
-		}
-		function flushTable(tableName) {
-			var table = document.getElementById(tableName);
-			while (table.lastChild) {
-				table.removeChild(table.lastChild);
-			}
-		}
-		function updateList() {
-			var table = document.getElementById('trackedlist-table');
-			var changes = {
-				add: new Array,
-				remove: new Array
-			}
-			var id;
-			for(var i = 0; i < table.childNodes.length; i++) {
-				node = table.childNodes[i];
-				id = node.querySelector('input').value;
-				if ('' == id) continue;
-				if('hidden' == node.style.visibility) {
-					changes.remove.push(id);
-				} else {
-					changes.add.push(id);
-				}
-			}
-			console.info('add:',changes.add, 'remove', changes.remove);
-			socket.emit('update-tracklist', changes);
-			getList();
-		}
-		function getList() {
-			socket.emit('get-tracklist');
-		}
-		function renderList(list) {
-			flushTable('trackedlist-table');
-			var item;
-			while (item = list.pop()) {
-				appendList(item);
-			}
-		};
-		function appendList(item) {
-			var table = document.getElementById('trackedlist-table');
-			var row = document.createElement('tr');
-			var cell = row.insertCell(-1);
-			//text field
-			var input = document.createElement('input');
-			input.value = (typeof(item) == 'object' ? '' : item);
-			//remove button
-			var button = document.createElement('input');
-			button.type = 'button'; button.value = '-';
-			//assemble
-			cell.appendChild(input);
-			cell.appendChild(button);
-			table.appendChild(row);
-			$(function () {
-				$('td > input[type=\'button\']').button().click(removeRow);
+	<head>
+		<script type="text/javascript"
+		  src="https://maps.googleapis.com/maps/api/js?sensor=false">
+		</script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
+		<link type="text/css" href="./jquery-simple-datetimepicker/jquery.simple-dtpicker.css" rel="stylesheet" />
+		<link type="text/css" href="./strike4/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
+		<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
+		<script>
+			var socket = io.connect('http://' + document.domain);
+			socket.on('handshake', function (data) {
+				console.log('connected', data.welcome);
+				$('#info').info('update', data.welcome, 'info');
+				getList();
 			});
-		}
-		function removeRow() {
-			var row = this.parentNode.parentNode;
-			row.style.visibility = 'hidden';
-		}
-		(function( $ ) {
-			var methods = {
-				init: function( options ) {
-					var $this = this;
-					return this.each(function () {
-						$this.settings = $.extend( {
-							'timeout': 10
-						}, options);
-						$this.attr('timeout', $this.settings.timeout * 1000);
-						$this.addClass('info');
-					})
-				},
-				show: function() {},
-				hide: function() {},
-				update: function( message, type, time ) {
-					var $this = this;
-					return this.each(function () {
-						if($this.hasClass('ui-state-error')) {
-							$this.removeClass('ui-state-error');
-						}
-						if(type == 'update') {
-							window.clearTimeout(window.infoTimer);
-							window.infoTimer = setTimeout(function () {
-								$this.addClass('ui-state-error');
-							}, $this.attr('timeout'))
-						}
-						$this.effect('highlight');
-						$this.html(message);
-					});
+			//query finished
+			socket.on('count', function (count) {
+				console.log('query', 'found ' + count);
+				$('#info').info('update', 'found ' + count, 'info');
+				setTimeout(function () {
+					$('#tabs').tabs('refresh');
+				}, 500);
+			});
+			//display server time
+			socket.on('clock', function (time) {
+				$('#clock').text(time);
+			});
+			//query
+			socket.on('query-waypoint', function (data) {
+				console.info('query', data);
+				if(undefined != data) 
+					showWaypoint(data, 'query-table');
+			});
+			//got new live waypoint
+			socket.on('update-waypoint', function (data) {
+				console.info(data);
+				if(undefined != data) {
+					//update marker on map
+					updateMarker(data);
+					//show in info box
+					newWaypoint(data);
+					//show new way point in table
+					showWaypoint(data, 'updates-table');
+					$('#tabs').tabs('refresh');
 				}
+			});
+			//got tracked modules list
+			socket.on('tracklist', function (list) {
+				console.info('list', list);
+				var select = document.getElementById('modules-id');
+				select.innerHTML = '';
+				for (var i = 0; i < list.length; i++){
+					var newid = document.createElement('option');
+					newid.value = list[i];
+					newid.textContent = list[i];
+					select.appendChild(newid);
+				}
+				displayList(list);
+			});
+			function query() {
+				flushTable('query-table');
+				var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
+				var timeoffset = (new Date).getTimezoneOffset() / 60
+				//parse start date
+				var strStartDate = document.querySelector('#start-date').value;
+				var arStartDate = re.exec(strStartDate);
+				var startDate = new Date(Date.UTC(arStartDate[5], --arStartDate[4],
+					arStartDate[3],  timeoffset + parseInt(arStartDate[1]), arStartDate[2]));
+				//parse end date
+				var strEndDate = document.querySelector('#end-date').value;
+				var arEndDate = re.exec(strEndDate);
+				var endDate = new Date(Date.UTC(arEndDate[5], --arEndDate[4],
+					arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
+				
+				var module_id = document.querySelector('#modules-id').value;
+				console.info('query', module_id, '%s ... %s', startDate, endDate);
+				socket.emit('query', {module_id: module_id, start: startDate.valueOf(), end: endDate.valueOf()});
 			}
-			$.fn.info = function( method ) {		
-				if ( methods[ method ] ) {
-					return methods[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
-				} else if ( typeof method === 'object' || ! method ) {
-					return methods.init.apply( this, arguments );
+			//render way point in corresponding table
+			function showWaypoint(message, tableName) {
+				var table = document.getElementById(tableName);
+				var row = document.createElement('tr');
+				row.id = message.timestamp;
+				for (property in message) {
+					row.setAttribute(property, message[property]);
+				}
+				
+				var time = row.insertCell(-1);
+				var g_time = new Date(parseInt(message.timestamp));
+				if(tableName == 'updates-table') {
+					if(table.childNodes.length > 10) { //limit to last 10 updates
+						table.removeChild(table.firstChild);
+					}
+					time.textContent = g_time.getHours() + ':' + g_time.getMinutes();
 				} else {
-					$.error( 'Method ' +  method + ' does not exist on jQuery.info' );
+					time.innerHTML = g_time.getDate() + '.' + (g_time.getMonth()+1) + '.' + g_time.getFullYear()
+						+ ' <b>' + g_time.getHours() + ':' + g_time.getMinutes() + '</b>';
 				}
+				time.classList.add('q-time');
+				
+				var address = row.insertCell(-1);
+				address.textContent = message.address;
+				address.classList.add('q-address');
+				
+				var speed = row.insertCell(-1);
+				speed.textContent = message.kph + ' km/h';
+				speed.classList.add('q-speed');
+				
+				table.appendChild(row);
 			}
-		}) ( jQuery );
-	</script>
+			function newWaypoint(data) {
+					var message = document.createElement('div');
+					message.classList.add('q-row');
+					//time
+					var time = document.createElement('span');
+					var g_time = new Date(data.timestamp);
+					time.textContent = g_time.getHours() + ':' + g_time.getMinutes();;
+					time.classList.add('q-time-now');
+					message.appendChild(time);
+					//speed
+					var kphArr = data.kph.split('.');
+					var speed = document.createElement('span');
+					speed.classList.add('q-speed-now');
+					var integer = document.createElement('span');
+					integer.style.fontSize = '1.2em';
+					integer.textContent = kphArr[0];
+					var fraction = document.createElement('span');
+					fraction.style.fontSize = '0.6em';
+					fraction.textContent = kphArr[1];
+					speed.appendChild(integer);
+					speed.appendChild(fraction);
+					message.appendChild(speed);
+					//address
+					var address = document.createElement('span');
+					address.textContent = data.address;
+					address.classList.add('q-address-now');
+					message.appendChild(address);
+					//display message in info box
+					$('#info').info('update', message.outerHTML, 'update');
+			}
+			function flushTable(tableName) {
+				var table = document.getElementById(tableName);
+				table.innerHTML = '';
+				/*while (table.lastChild) {
+					table.removeChild(table.lastChild);
+				}*/
+			}
+			function updateList() {
+				var table = document.getElementById('trackedlist-table');
+				var changes = {
+					add: new Array,
+					remove: new Array
+				}
+				var id;
+				for(var i = 0; i < table.childNodes.length; i++) {
+					node = table.childNodes[i];
+					id = node.querySelector('input').value;
+					if ('' == id) continue;
+					if('hidden' == node.style.visibility) {
+						changes.remove.push(id);
+					} else {
+						changes.add.push(id);
+					}
+				}
+				console.info('update', 'add:',changes.add, 'remove', changes.remove);
+				socket.emit('update-tracklist', changes);
+				getList();
+			}
+			function getList() {
+				socket.emit('get-tracklist');
+			}
+			function displayList(list) {
+				flushTable('trackedlist-table');
+				for (var i = 0; i < list.length; i++) {
+					addModuleId(list[i]);
+				}
+			};
+			function addModuleId(item) {
+				var table = document.getElementById('trackedlist-table');
+				var row = document.createElement('tr');
+				var cell = row.insertCell(-1);
+				//text field
+				var input = document.createElement('input');
+				input.value = (typeof(item) == 'object' ? '' : item);
+				//remove button
+				var button = document.createElement('input');
+				button.type = 'button'; button.value = 'x';
+				//assemble
+				cell.appendChild(input);
+				cell.appendChild(button);
+				table.appendChild(row);
+				$(function () {
+					$('td > input[type=\'button\']').button().click(removeRow);
+				});
+			}
+			function removeRow() {
+				var row = this.parentNode.parentNode;
+				row.style.visibility = 'hidden';
+			}
+			function routes() {
+				
+			}
+			(function( $ ) {
+				var methods = {
+					init: function( options ) {
+						var $this = this;
+						return this.each(function () {
+							$this.settings = $.extend( {
+								'timeout': 10
+							}, options);
+							$this.attr('timeout', $this.settings.timeout * 1000);
+							$this.addClass('info');
+						})
+					},
+					show: function() {},
+					hide: function() {},
+					update: function( message, type, time ) {
+						var $this = this;
+						return this.each(function () {
+							if($this.hasClass('ui-state-error')) {
+								$this.removeClass('ui-state-error');
+							}
+							if(type == 'update') {
+								window.clearTimeout(window.infoTimer);
+								window.infoTimer = setTimeout(function () {
+									$this.addClass('ui-state-error');
+								}, $this.attr('timeout'))
+							}
+							$this.effect('highlight');
+							$this.html(message);
+						});
+					}
+				}
+				$.fn.info = function( method ) {		
+					if ( methods[ method ] ) {
+						return methods[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
+					} else if ( typeof method === 'object' || ! method ) {
+						return methods.init.apply( this, arguments );
+					} else {
+						$.error( 'Method ' +  method + ' does not exist on jQuery.info' );
+					}
+				}
+			}) ( jQuery );
+		</script>
+		<!-- Google Maps //-->
+		<script>
+			var mapCenter = new google.maps.LatLng(56.9496,24.1040);//Riga
+			var mapProp = {
+				center: mapCenter,
+				zoom: 12,
+				mapTypeId: google.maps.MapTypeId.ROADMAP
+			};
+			//var symbol = 'M -0.3,0 -0.3,5 M 0.3,0 0.3,5 M 0.3,5 2,1 M -0.3,5 -2,1 M 0.3,0 2,1 M -0.3,0 -2,1';
+			var symbol = 'M -0.3,-2 -0.3,2 M 0.3,-2 0.3,2 M 0.3,2 2,-1.5 M -0.3,2 -2,-1.5 M 0.3,-2 2,-1.5 M -0.3,-2 -2,-1.5';
+			var trails = new Object;
+			var map;
+			var markers = new Object;
+			
+			function initMap() {
+				map = new google.maps.Map(document.getElementById("map"),mapProp);
+			}
+			function updateMapSize() {
+				var mapElement = document.getElementById('map');
+				var divMap = mapElement.parentNode;
+				divMap.style.height = window.innerHeight - divMap.offsetTop;
+			}
+			function updateMarker(gps_msg) {
+				var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
+				//update trail
+				if(!trails[gps_msg.id]) {
+					trails[gps_msg.id] = new Object;
+					trails[gps_msg.id].trip = new Array;
+					trails[gps_msg.id].trail = new google.maps.Polyline({
+						strokeColor: '#776755',
+						strokeWeight: 3,
+						strokeOpacity: 0.8
+					});
+					trails[gps_msg.id].trail.setMap(map);
+				}
+				trails[gps_msg.id].trip.push(latlong)
+				if (trails[gps_msg.id].trip.length > 10) {
+					trails[gps_msg.id].trip.shift();
+				}
+				trails[gps_msg.id].trail.setPath(trails[gps_msg.id].trip);
+				//update marker
+				if(!markers[gps_msg.id]) {
+					markers[gps_msg.id] = new google.maps.Marker();
+					markers[gps_msg.id].setMap(map);
+				}
+				markers[gps_msg.id].setIcon({
+					path: symbol,
+					strokeColor: '#ef5611',
+					strokeWeight: 2,
+					scale: 5,
+					rotation: gps_msg.track - gps_msg.magv
+				});
+				markers[gps_msg.id].setPosition(latlong);
+				map.setCenter(latlong);
+			}
+			google.maps.event.addDomListener(window, 'load', initMap);
+		</script>
+		<!-- Google Maps //-->
+	</head>
 	<body>
 		<table class='q-table'>
 			<tr>
@@ -225,14 +315,17 @@
 		</table>
 		<div id='tabs'>
 			<ul>
-				<li><a href='#tabs-updates'>Now</a></li>
+				<li><a href='#tabs-n'>Map</a></li>
+				<li><a href='#tabs-updates'>History</a></li>
 				<li><a href='#tabs-query'>Query</a></li>
 				<li><a href='#tabs-settings'>Settings</a></li>
 			</ul>
 			<div id='tabs-query'>
-				<input type="text" id="start-date">
-				<input type="text" id="end-date">
-				<input type='button' id='query' value='Query'>
+				<input type="text" id="start-date"></input>
+				<input type="text" id="end-date"></input>
+				<select id="modules-id"></select>
+				<input type='button' id='query' value='Query'></input>
+				<input type='button' id='routes' value='Routes'></input>
 				<table id='query-table' class='q-table'></table>
 			</div>
 			<div id='tabs-updates'>
@@ -244,6 +337,7 @@
 				<input type='button' id='append-list' value='+'>
 			</div>
 		</div>
+		<div id='map'></div>
 		<script type="text/javascript">
 			$(function(){
 				var date = new Date;
@@ -263,16 +357,19 @@
 				$('#query').button().click(query);
 			});
 			$(function () {
+				$('#routes').button().click(routes);
+			});
+			$(function () {
 				$('#update-list').button().click(updateList);
 			});
 			$(function () {
-				$('#append-list').button().click(appendList);
+				$('#append-list').button().click(addModuleId);
 			});
 			$(function() {
 				$('#tabs').tabs({
 					activate: function(event, ui) {
 						if('#tabs-settings' == ui.newTab.context.hash) {
-							getList();
+							//getList();
 						}
 					}
 				});
