@@ -1,7 +1,7 @@
 .q-table {width: 100%;}
 .q-row {}
 .q-row:hover {background: #ffffc8;}
-.q-time {border: #df7611; color: black; max-width: 3.2em; text-align: center;}
+.q-time {border: #df7611; color: black; max-width: 5em; text-align: center;}
 .q-time-now {
 	font-size: smaller;
 	border: #df7611;
@@ -23,6 +23,15 @@
 	text-align: center;
 	display: inline-block;
 }
+.q-view {
+	display: block;
+	width: 100%;
+	max-height: 10em;
+	overflow-y:auto;
+}
+.q-separator {
+	height: 0.5em;
+};
 .info {}
 .u-table {width: 100%}
 input {
@@ -44,11 +53,10 @@ input:focus {
 	top: 6em;
 	left: 0px;
 }
-@keyframes slidein {
-  from {
-    margin-left: 100%;
-  }
-  to {
-    margin-left: 0%;
-  }
+#print-frame {
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	width: 0px;
+	height: 0px;
 }
