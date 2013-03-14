@@ -170,7 +170,7 @@
 					node = table.childNodes[i];
 					id = node.querySelector('input').value;
 					if ('' == id) continue;
-					if('hidden' == node.style.visibility) {
+					if('none' == node.style.display) {
 						changes.remove.push(id);
 					} else {
 						changes.add.push(id);
