@@ -12,6 +12,7 @@
 		<link type="text/css" href="./strike4/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
 		<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
 		<script>
+			var threshold = 5 * 60 * 1000 //5min  -- threshold to distinguish trips
 			var socket = io.connect('http://' + document.domain);
 			socket.on('handshake', function (data) {
 				console.log('connected', data.welcome);
@@ -64,6 +65,7 @@
 			});
 			function query() {
 				flushTable('query-table');
+				flushTable('trips-table');
 				var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
 				var timeoffset = (new Date).getTimezoneOffset() / 60
 				//parse start date
@@ -85,9 +87,16 @@
 			function showWaypoint(message, tableName) {
 				var table = document.getElementById(tableName);
 				var row = document.createElement('tr');
+				row.classList.add('q-row');
 				row.id = message.timestamp;
 				for (property in message) {
 					row.setAttribute(property, message[property]);
+				}
+				row.onmouseover = function () {
+					showActiveMarker(message.lat, message.long);
+				}
+				row.onmouseout = function () {
+					hideActiveMarker();
 				}
 				
 				var time = row.insertCell(-1);
@@ -168,6 +177,7 @@
 					}
 				}
 				console.info('update', 'add:',changes.add, 'remove', changes.remove);
+				$('#info').info('update', 'Modules list updated');
 				socket.emit('update-tracklist', changes);
 				getList();
 			}
@@ -200,10 +210,105 @@
 			}
 			function removeRow() {
 				var row = this.parentNode.parentNode;
-				row.style.visibility = 'hidden';
+				row.style.display = 'none';
 			}
-			function routes() {
+			function toggleQuery() {
+				var query = document.getElementById('query-table');
+				var trips = document.getElementById('trips-table');
+				//toggle
+				if (query.style.display == 'none') {
+					query.style.display = 'table';
+					trips.style.display = 'none';
+				} else {
+					query.style.display = 'none';
+					trips.style.display = 'table';
+				}
 				
+				if (trips.childNodes.length == 0
+					&& query.childNodes.length != 0) {
+					detectRoutes();
+				} 
+			}
+			function detectRoutes() {
+				var routesCount = 0;
+				var query = document.getElementById('query-table');
+				
+				var trips = document.getElementById('trips-table');
+				
+				var waypointHtml = query.firstChild;
+				var waypoint = {
+					time: parseInt(waypointHtml.getAttribute('timestamp')),
+					address: waypointHtml.getAttribute('address'),
+				};
+				var start = waypoint,
+					last = start,
+					end;
+				var calcTime,
+					lastTime;
+				
+				while (waypointHtml) {
+					var waypoint = {
+						time: parseInt(waypointHtml.getAttribute('timestamp')),
+						address: waypointHtml.getAttribute('address'),
+					};
+					//calculate
+					curTime = parseInt(waypoint.time);
+					calcTime = curTime - last.time;
+					console.log(calcTime, '>', threshold);
+					if(calcTime > threshold) {
+						routesCount++
+						trips.appendChild(tripRow(start, last));
+						start = waypoint;
+					}
+					last = waypoint
+					//next iteration
+					waypointHtml = waypointHtml.nextSibling;
+				}
+				console.info('Distinguished', routesCount, 'routes');
+				$('#info').info('update', 'Distinguished ' + routesCount + ' routes');
+			}
+			
+			function tripRow(start, stop) {
+				var trip = document.createElement('tr');
+				trip.classList.add('q-row');
+				var cell_startTime = trip.insertCell(-1);
+				cell_startTime.classList.add('q-time');
+				var bTime = new Date(start.time);
+				cell_startTime.innerHTML = bTime.getDate() + '.' + (bTime.getMonth()+1) + '.' + bTime.getFullYear()
+						+ ' <b>' + bTime.getHours() + ':' + bTime.getMinutes() + '</b>';
+				
+				var cell_startAddress = trip.insertCell(-1);
+				cell_startAddress.textContent = start.address;
+				cell_startAddress.classList.add('q-address');
+				
+				var cell_stopTime = trip.insertCell(-1);
+				cell_stopTime.classList.add('q-time');
+				var eTime = new Date(stop.time);
+				cell_stopTime.textContent = eTime.getHours() + ':' + eTime.getMinutes();
+				
+				var cell_stopAddress = trip.insertCell(-1);
+				cell_stopAddress.classList.add('q-address');
+				cell_stopAddress.textContent= stop.address;
+
+				return trip;
+			}
+			function printReport() {
+				var trips = document.getElementById('trips-table');
+				var query = document.getElementById('query-table');
+				var report;
+				if (query.style.display == 'none') {
+					report = trips;
+				} else {
+					report = query;
+				}
+				//var printFrame = document.createElement('iframe');
+				var printFrame = document.getElementById('print-frame');
+				with (printFrame) {
+					contentDocument.write('<link type="text/css" href="./strike4/print.css" rel="stylesheet" />');
+					contentDocument.write(report.outerHTML);
+					contentWindow.print();
+				}
+				$('#info').info('update', 'Printing');
 			}
 			(function( $ ) {
 				var methods = {
@@ -260,14 +365,24 @@
 			var trails = new Object;
 			var map;
 			var markers = new Object;
+			var active = new google.maps.Marker();
 			
 			function initMap() {
 				map = new google.maps.Map(document.getElementById("map"),mapProp);
+				active.setMap(map);
 			}
 			function updateMapSize() {
 				var mapElement = document.getElementById('map');
 				var divMap = mapElement.parentNode;
 				divMap.style.height = window.innerHeight - divMap.offsetTop;
+			}
+			function showActiveMarker(lat, lng) {
+				var latlong = new google.maps.LatLng(lat, lng);
+				active.setPosition(latlong);
+				active.setVisible(true);
+			}
+			function hideActiveMarker() {
+				active.setVisible(false);
 			}
 			function updateMarker(gps_msg) {
 				var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
@@ -325,8 +440,15 @@
 				<input type="text" id="end-date"></input>
 				<select id="modules-id"></select>
 				<input type='button' id='query' value='Query'></input>
-				<input type='button' id='routes' value='Routes'></input>
-				<table id='query-table' class='q-table'></table>
+				<span id='radio'>
+					<input type="radio" id="radio1" name="radio" checked="checked" /><label for="radio1">Waypoints</label>
+					<input type="radio" id="radio2" name="radio" /><label for="radio2">Trips</label>
+				</span>
+				<input type='button' id='print-report' value='Print'></input>
+				<div class='q-view'>
+					<table id='query-table' class='q-table' ></table>
+					<table id='trips-table' class='q-table'></table>
+				</div>
 			</div>
 			<div id='tabs-updates'>
 				<table id='updates-table' class='u-table'></table>
@@ -338,6 +460,7 @@
 			</div>
 		</div>
 		<div id='map'></div>
+		<iframe id='print-frame'></iframe>
 		<script type="text/javascript">
 			$(function(){
 				var date = new Date;
@@ -357,13 +480,16 @@
 				$('#query').button().click(query);
 			});
 			$(function () {
-				$('#routes').button().click(routes);
+				$('#radio').buttonset().change(toggleQuery);
 			});
 			$(function () {
 				$('#update-list').button().click(updateList);
 			});
 			$(function () {
 				$('#append-list').button().click(addModuleId);
+			});
+			$(function () {
+				$('#print-report').button().click(printReport);
 			});
 			$(function() {
 				$('#tabs').tabs({
