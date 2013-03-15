@@ -19,6 +19,7 @@ redis.on('tracklist-server', function (response) {
 	var list = response.list
 	queue.isTracked = new Object;
 	console.log('[GPS]'.grey, 'updating tracking list:', list);
+	if (list == undefined) return;
 	for (var i = 0; i < list.length; i++) {
 		queue.isTracked[list[i]] = true;
 	}

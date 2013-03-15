@@ -47,7 +47,7 @@ Proto.getList = function(request) {
 	console.log('[redis]'.grey, dst, 'requested tracking list');
 	client.smembers('tracklist', function (err, list) {
 		if (err) console.info('[redis]'.grey, 'error'.red);
-		console.info('[redis]'.grey, 'found', list.length, 'in tracking list');
+		console.info('[redis]'.grey, 'found', list == undefined ? '0' : list.length, 'in tracking list');
 		Proto.emit('tracklist-' + dst, {'socket_id': client_id, 'list': list});
 	});
 }

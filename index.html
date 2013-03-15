@@ -224,40 +224,47 @@
 					trips.style.display = 'table';
 				}
 				
-				if (trips.childNodes.length == 0
-					&& query.childNodes.length != 0) {
-					detectRoutes();
-				} 
+				detectRoutes();
+
 			}
 			function detectRoutes() {
 				var routesCount = 0;
 				var query = document.getElementById('query-table');
 				
 				var trips = document.getElementById('trips-table');
+				var tripCoords = new Array;
 				
 				var waypointHtml = query.firstChild;
-				var waypoint = {
-					time: parseInt(waypointHtml.getAttribute('timestamp')),
-					address: waypointHtml.getAttribute('address'),
-				};
+				//do we have any waypoint?
+				if (waypointHtml == undefined) return;
+				var waypoint =  {
+						time: parseInt(waypointHtml.getAttribute('timestamp')),
+						address: waypointHtml.getAttribute('address'),
+						lat: waypointHtml.getAttribute('lat'),
+						lng: waypointHtml.getAttribute('long')
+					};
 				var start = waypoint,
-					last = start,
-					end;
+					last = start;
 				var calcTime,
 					lastTime;
 				
 				while (waypointHtml) {
-					var waypoint = {
+					var waypoint =  {
 						time: parseInt(waypointHtml.getAttribute('timestamp')),
 						address: waypointHtml.getAttribute('address'),
+						lat: waypointHtml.getAttribute('lat'),
+						lng: waypointHtml.getAttribute('long')
 					};
+					//tripCoords.push([waypoint.lat, waypoint.lng]);
+					
 					//calculate
 					curTime = parseInt(waypoint.time);
 					calcTime = curTime - last.time;
-					console.log(calcTime, '>', threshold);
 					if(calcTime > threshold) {
 						routesCount++
-						trips.appendChild(tripRow(start, last));
+						//tripCoords.push([last.lat, last.lng]);
+						trips.appendChild(tripRow(start, last, tripCoords));
+						//tripCoords = new Array;
 						start = waypoint;
 					}
 					last = waypoint
@@ -268,7 +275,7 @@
 				$('#info').info('update', 'Distinguished ' + routesCount + ' routes');
 			}
 			
-			function tripRow(start, stop) {
+			function tripRow(start, stop, coords) {
 				var trip = document.createElement('tr');
 				trip.classList.add('q-row');
 				var cell_startTime = trip.insertCell(-1);
@@ -276,6 +283,7 @@
 				var bTime = new Date(start.time);
 				cell_startTime.innerHTML = bTime.getDate() + '.' + (bTime.getMonth()+1) + '.' + bTime.getFullYear()
 						+ ' <b>' + bTime.getHours() + ':' + bTime.getMinutes() + '</b>';
+				trip.setAttribute('starttime', start.time);
 				
 				var cell_startAddress = trip.insertCell(-1);
 				cell_startAddress.textContent = start.address;
@@ -285,11 +293,17 @@
 				cell_stopTime.classList.add('q-time');
 				var eTime = new Date(stop.time);
 				cell_stopTime.textContent = eTime.getHours() + ':' + eTime.getMinutes();
+				trip.setAttribute('stoptime', stop.time);
 				
 				var cell_stopAddress = trip.insertCell(-1);
 				cell_stopAddress.classList.add('q-address');
 				cell_stopAddress.textContent= stop.address;
-
+				
+				//trip.setAttribute('coordinates', coords.join('_'));
+				
+				trip.onclick = function() {
+					showHistoricalTrip(start.time, stop.time);
+				}
 				return trip;
 			}
 			function printReport() {
@@ -364,12 +378,18 @@
 			var symbol = 'M -0.3,-2 -0.3,2 M 0.3,-2 0.3,2 M 0.3,2 2,-1.5 M -0.3,2 -2,-1.5 M 0.3,-2 2,-1.5 M -0.3,-2 -2,-1.5';
 			var trails = new Object;
 			var map;
+			var hpath = new google.maps.Polyline({
+				strokeColor: '#776755',
+				strokeWeight: 3,
+				strokeOpacity: 0.8
+			});
 			var markers = new Object;
 			var active = new google.maps.Marker();
 			
 			function initMap() {
 				map = new google.maps.Map(document.getElementById("map"),mapProp);
 				active.setMap(map);
+				hpath.setMap(map)
 			}
 			function updateMapSize() {
 				var mapElement = document.getElementById('map');
@@ -384,6 +404,21 @@
 			function hideActiveMarker() {
 				active.setVisible(false);
 			}
+			function showHistoricalTrip(start, stop) {
+				var path = new Array;
+				var waypoint = document.getElementById(start);
+				
+				while(waypoint.getAttribute('timestamp') <= stop) {
+					path.push(new google.maps.LatLng(waypoint.getAttribute('lat'), waypoint.getAttribute('long')))
+					waypoint = waypoint.nextSibling;
+				}
+				hpath.setPath(path);
+				hpath.setVisible(true);
+			}
+			function hideHistoricalTrip() {
+				hpath.setVisible(false);
+			}
+			
 			function updateMarker(gps_msg) {
 				var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
 				//update trail
@@ -391,7 +426,7 @@
 					trails[gps_msg.id] = new Object;
 					trails[gps_msg.id].trip = new Array;
 					trails[gps_msg.id].trail = new google.maps.Polyline({
-						strokeColor: '#776755',
+						strokeColor: '#ef5611',
 						strokeWeight: 3,
 						strokeOpacity: 0.8
 					});
@@ -415,7 +450,7 @@
 					rotation: gps_msg.track - gps_msg.magv
 				});
 				markers[gps_msg.id].setPosition(latlong);
-				map.setCenter(latlong);
+				//map.setCenter(latlong);
 			}
 			google.maps.event.addDomListener(window, 'load', initMap);
 		</script>
@@ -496,6 +531,9 @@
 					activate: function(event, ui) {
 						if('#tabs-settings' == ui.newTab.context.hash) {
 							//getList();
+						}
+						if('#tabs-query' != ui.newTab.context.hash) {
+							hideHistoricalTrip();
 						}
 					}
 				});
