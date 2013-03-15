@@ -1,0 +1,9 @@
+[Unit]
+Description=GPS Tracker node
+Requires=redis.service
+After=redis.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /var/gps-tracker/main.js
+ExecStop=killall node
