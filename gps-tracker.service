@@ -5,5 +5,5 @@ After=mongodb.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/node /var/gps-tracker/main.js &2>1
+ExecStart=/usr/bin/node /var/gps-tracker/main.js
 ExecStop=kill -9 $(pgrep node)
