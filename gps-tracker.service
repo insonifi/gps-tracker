@@ -1,7 +1,7 @@
 [Unit]
 Description=GPS Tracker node
-Requires=mongodb.service
-After=mongodb.service
+Requires=mongod.service
+After=mongod.service
 
 [Service]
 Type=simple
