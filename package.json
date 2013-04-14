@@ -9,8 +9,8 @@
     "colors": "",
     "node-zip": "",
     "socket.io": "",
-    "redis": "",
-    "hiredis": ""
+    "colors": "",
+    "mongodb": ""
   },
   "devDependencies": {}
 }

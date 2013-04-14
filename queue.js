@@ -1,12 +1,12 @@
 var EventEmitter = require('events').EventEmitter;
 var Proto = new EventEmitter;
 var googleApi = require('./google_api');
-var redis = require('./redis_db');
+var database = require('./database');
 var nmea = require('./nmea');
 var queue = new Array;
 
 googleApi.on('address', function (gps_msg) {
-	redis.addRecord(gps_msg);
+	database.addRecord(gps_msg);
 	Proto.emit('send-update', gps_msg);
 });
 

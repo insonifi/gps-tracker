@@ -29,7 +29,7 @@
 			});
 			//display server time
 			socket.on('clock', function (time) {
-				$('#clock').text(time);
+				$('#clock').text((new Date(time)).toLocaleTimeString());
 			});
 			//query
 			socket.on('query-waypoint', function (data) {
@@ -51,7 +51,7 @@
 				}
 			});
 			//got tracked modules list
-			socket.on('tracklist', function (list) {
+			socket.on('modulelist', function (list) {
 				console.info('list', list);
 				var select = document.getElementById('modules-id');
 				select.innerHTML = '';
@@ -160,7 +160,7 @@
 				}*/
 			}
 			function updateList() {
-				var table = document.getElementById('trackedlist-table');
+				var table = document.getElementById('modulelist-table');
 				var changes = {
 					add: new Array,
 					remove: new Array
@@ -178,25 +178,27 @@
 				}
 				console.info('update', 'add:',changes.add, 'remove', changes.remove);
 				$('#info').info('update', 'Modules list updated');
-				socket.emit('update-tracklist', changes);
+				socket.emit('update-modulelist', changes);
 				getList();
 			}
 			function getList() {
-				socket.emit('get-tracklist');
+				socket.emit('get-modulelist');
 			}
 			function displayList(list) {
-				flushTable('trackedlist-table');
+				flushTable('modulelist-table');
 				for (var i = 0; i < list.length; i++) {
-					addModuleId(list[i]);
+					addModuleId(list[i], editable = false);
 				}
 			};
-			function addModuleId(item) {
-				var table = document.getElementById('trackedlist-table');
+			function addModuleId(item, editable) {
+				var table = document.getElementById('modulelist-table');
 				var row = document.createElement('tr');
 				var cell = row.insertCell(-1);
 				//text field
 				var input = document.createElement('input');
 				input.value = (typeof(item) == 'object' ? '' : item);
+				input.readOnly = editable == false ? true : false;
+				input.type = 'tel';
 				//remove button
 				var button = document.createElement('input');
 				button.type = 'button'; button.value = 'x';
@@ -489,7 +491,7 @@
 				<table id='updates-table' class='u-table'></table>
 			</div>
 			<div id='tabs-settings'>
-				<table id='trackedlist-table'></table>
+				<table id='modulelist-table'></table>
 				<input type='button' id='update-list' value='Update'>
 				<input type='button' id='append-list' value='+'>
 			</div>

@@ -2,27 +2,31 @@ var net = require('net');
 //var track = require('./kml_track');
 var colors = require('colors'),
 	queue = require('./queue'),
-	redis = require('./redis_db'),
+	database = require('./database'),
 	express = require('express'),
 	app = express(),
-	socket_session = new Object,
+	socket_session = {},
 	client_socket,
+
 	server = require('http').createServer(app),
 	io = require('socket.io').listen(server),
 	vId = null;
 
 /************************ Update tracking list ************************/
 //refresh tracked id list
-redis.getList({client: 'server'});
+database.on('connected', function () {
+	database.getModuleList({client: 'server'});
+});
 //server tracked id list
-redis.on('tracklist-server', function (response) {
+database.on('modulelist-server', function (response) {
 	var list = response.list
-	queue.isTracked = new Object;
-	console.log('[GPS]'.grey, 'updating tracking list:', list);
+	queue.isTracked = {};
+	console.log('[GPS]'.grey, 'updating tracked modules list:', list);
 	if (list == undefined) return;
 	for (var i = 0; i < list.length; i++) {
 		queue.isTracked[list[i]] = true;
 	}
+	console.log('29'.green, queue.isTracked);
 });
 /********************** HTTP server ***********************************/
 //start HTTP server
@@ -54,7 +58,7 @@ io.set('transports', [
 ]);
 /********************/
 setInterval(function () {
-	io.sockets.emit('clock', (new Date()).toISOString().slice(11,16));
+	io.sockets.emit('clock', (new Date()).valueOf);
 }, 60000);
 queue.on('send-update', function (data) {
 	io.sockets.emit('update-waypoint', data);
@@ -71,31 +75,31 @@ io.sockets.on('connection', function (socket) {
 	});
 //query
 	global_socket.on('query', function (data) {
-		redis.query({'socket_id': socket.id, 'module_id': data.module_id, 'begin': data.start, 'end': data.end});
+		database.query({'socket_id': socket.id, 'module_id': data.module_id, 'begin': data.start, 'end': data.end});
 	});
 
 //update tracklist
-	global_socket.on('update-tracklist', function (changes) {
-		redis.updateTracklist(changes);
+	global_socket.on('update-modulelist', function (changes) {
+		database.updateModuleList(changes);
 	});
 //get tracklist
-	global_socket.on('get-tracklist', function () {
-		redis.getList({'client': 'client', 'socket_id': socket.id});
+	global_socket.on('get-modulelist', function () {
+		database.getModuleList({'client': 'client', 'socket_id': socket.id});
 	});
 
 });
 
-redis.on('result', function(response) {
+database.on('result', function(response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('query-waypoint', response.result);
 });
-redis.on('count', function(response) {
+database.on('count', function(response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('count', response.count);
 });
-redis.on('tracklist-client', function (response) {
+database.on('modulelist-client', function (response) {
 	client_socket = socket_session[response.socket_id];
-	client_socket.emit('tracklist', response.list);
+	client_socket.emit('modulelist', response.list);
 });
 
 /*************************** GPS server *******************************/					
