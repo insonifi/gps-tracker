@@ -26,7 +26,6 @@ database.on('modulelist-server', function (response) {
 	for (var i = 0; i < list.length; i++) {
 		queue.isTracked[list[i]] = true;
 	}
-	console.log('29'.green, queue.isTracked);
 });
 /********************** HTTP server ***********************************/
 //start HTTP server
@@ -57,8 +56,9 @@ io.set('transports', [
   , 'jsonp-polling'
 ]);
 /********************/
+//clock
 setInterval(function () {
-	io.sockets.emit('clock', (new Date()).valueOf);
+	io.sockets.emit('clock', (new Date).valueOf());
 }, 60000);
 queue.on('send-update', function (data) {
 	io.sockets.emit('update-waypoint', data);

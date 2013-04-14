@@ -15,13 +15,13 @@
 			var threshold = 5 * 60 * 1000 //5min  -- threshold to distinguish trips
 			var socket = io.connect('http://' + document.domain);
 			socket.on('handshake', function (data) {
-				console.log('connected', data.welcome);
+				console.log('[connected]', data.welcome);
 				$('#info').info('update', data.welcome, 'info');
 				getList();
 			});
 			//query finished
 			socket.on('count', function (count) {
-				console.log('query', 'found ' + count);
+				console.log('[query]', 'found ' + count);
 				$('#info').info('update', 'found ' + count, 'info');
 				setTimeout(function () {
 					$('#tabs').tabs('refresh');
@@ -29,6 +29,7 @@
 			});
 			//display server time
 			socket.on('clock', function (time) {
+				console.info('[clock]', time);
 				$('#clock').text((new Date(time)).toLocaleTimeString());
 			});
 			//query
@@ -39,7 +40,7 @@
 			});
 			//got new live waypoint
 			socket.on('update-waypoint', function (data) {
-				console.info(data);
+				console.info('[waypoint]',data);
 				if(undefined != data) {
 					//update marker on map
 					updateMarker(data);
@@ -52,7 +53,7 @@
 			});
 			//got tracked modules list
 			socket.on('modulelist', function (list) {
-				console.info('list', list);
+				console.info('[list]', list);
 				var select = document.getElementById('modules-id');
 				select.innerHTML = '';
 				for (var i = 0; i < list.length; i++){
@@ -80,7 +81,7 @@
 					arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
 				
 				var module_id = document.querySelector('#modules-id').value;
-				console.info('query', module_id, '%s ... %s', startDate, endDate);
+				console.info('[query]', module_id, '%s ... %s', startDate, endDate);
 				socket.emit('query', {module_id: module_id, start: startDate.valueOf(), end: endDate.valueOf()});
 			}
 			//render way point in corresponding table
@@ -176,7 +177,7 @@
 						changes.add.push(id);
 					}
 				}
-				console.info('update', 'add:',changes.add, 'remove', changes.remove);
+				console.info('[updateList] update', 'add:',changes.add, 'remove', changes.remove);
 				$('#info').info('update', 'Modules list updated');
 				socket.emit('update-modulelist', changes);
 				getList();
@@ -273,7 +274,7 @@
 					//next iteration
 					waypointHtml = waypointHtml.nextSibling;
 				}
-				console.info('Distinguished', routesCount, 'routes');
+				console.info('[detectRoutes]', 'Distinguished', routesCount, 'routes');
 				$('#info').info('update', 'Distinguished ' + routesCount + ' routes');
 			}
 			
@@ -381,7 +382,7 @@
 			var trails = new Object;
 			var map;
 			var hpath = new google.maps.Polyline({
-				strokeColor: '#776755',
+				strokeColor: '#a76755',
 				strokeWeight: 3,
 				strokeOpacity: 0.8
 			});
@@ -462,7 +463,7 @@
 		<table class='q-table'>
 			<tr>
 				<td><div id='info'></div></td>
-				<td style='width: 5em'><div id='clock'></div></td>
+				<td style='width: 6em'><div id='clock'></div></td>
 			</tr>
 		</table>
 		<div id='tabs'>
