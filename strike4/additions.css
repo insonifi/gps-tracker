@@ -3,7 +3,7 @@
 .q-row:hover {background: #ffffc8;}
 .q-time {border: #df7611; color: black; max-width: 5em; text-align: center;}
 .q-time-now {
-	font-size: xx-small;
+	font-size: smaller;
 	border: #df7611;
 	color: grey;
 	padding-right: 0.5em;
@@ -59,4 +59,8 @@ input:focus {
 	left: 0px;
 	width: 0px;
 	height: 0px;
+}
+#clock {
+	font-size: smaller;
+	border: #df7611;
 }

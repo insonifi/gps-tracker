@@ -371,92 +371,97 @@
 		</script>
 		<!-- Google Maps //-->
 		<script>
-			var mapCenter = new google.maps.LatLng(56.9496,24.1040);//Riga
-			var mapProp = {
-				center: mapCenter,
-				zoom: 12,
-				mapTypeId: google.maps.MapTypeId.ROADMAP
-			};
-			//var symbol = 'M -0.3,0 -0.3,5 M 0.3,0 0.3,5 M 0.3,5 2,1 M -0.3,5 -2,1 M 0.3,0 2,1 M -0.3,0 -2,1';
-			var symbol = 'M -0.3,-2 -0.3,2 M 0.3,-2 0.3,2 M 0.3,2 2,-1.5 M -0.3,2 -2,-1.5 M 0.3,-2 2,-1.5 M -0.3,-2 -2,-1.5';
-			var trails = new Object;
-			var map;
-			var hpath = new google.maps.Polyline({
-				strokeColor: '#a76755',
-				strokeWeight: 3,
-				strokeOpacity: 0.8
-			});
-			var markers = new Object;
-			var active = new google.maps.Marker();
-			
-			function initMap() {
-				map = new google.maps.Map(document.getElementById("map"),mapProp);
-				active.setMap(map);
-				hpath.setMap(map)
-			}
-			function updateMapSize() {
-				var mapElement = document.getElementById('map');
-				var divMap = mapElement.parentNode;
-				divMap.style.height = window.innerHeight - divMap.offsetTop;
-			}
-			function showActiveMarker(lat, lng) {
-				var latlong = new google.maps.LatLng(lat, lng);
-				active.setPosition(latlong);
-				active.setVisible(true);
-			}
-			function hideActiveMarker() {
-				active.setVisible(false);
-			}
-			function showHistoricalTrip(start, stop) {
-				var path = new Array;
-				var waypoint = document.getElementById(start);
-				
-				while(waypoint.getAttribute('timestamp') <= stop) {
-					path.push(new google.maps.LatLng(waypoint.getAttribute('lat'), waypoint.getAttribute('long')))
-					waypoint = waypoint.nextSibling;
-				}
-				hpath.setPath(path);
-				hpath.setVisible(true);
-			}
-			function hideHistoricalTrip() {
-				hpath.setVisible(false);
-			}
-			
-			function updateMarker(gps_msg) {
-				var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
-				//update trail
-				var module_id = gps_msg.module_id;
-				if(!trails[module_id]) {
-					trails[module_id] = new Object;
-					trails[module_id].trip = new Array;
-					trails[module_id].trail = new google.maps.Polyline({
-						strokeColor: '#ef5611',
-						strokeWeight: 3,
-						strokeOpacity: 0.8
-					});
-					trails[module_id].trail.setMap(map);
-				}
-				trails[module_id].trip.push(latlong)
-				if (trails[module_id].trip.length > 10) {
-					trails[module_id].trip.shift();
-				}
-				trails[module_id].trail.setPath(trails[module_id].trip);
-				//update marker
-				if(!markers[module_id]) {
-					markers[module_id] = new google.maps.Marker();
-					markers[module_id].setMap(map);
-				}
-				markers[module_id].setIcon({
-					path: symbol,
-					strokeColor: '#ef5611',
-					strokeWeight: 2,
-					scale: 5,
-					rotation: gps_msg.track - gps_msg.magv
+			(function () {
+				var mapCenter = new google.maps.LatLng(56.9496,24.1040);//Riga
+				var mapProp = {
+					center: mapCenter,
+					zoom: 12,
+					mapTypeId: google.maps.MapTypeId.ROADMAP
+				};
+				//var symbol = 'M -0.3,0 -0.3,5 M 0.3,0 0.3,5 M 0.3,5 2,1 M -0.3,5 -2,1 M 0.3,0 2,1 M -0.3,0 -2,1';
+				//var symbol = 'M -0.3,-2 -0.3,2 M 0.3,-2 0.3,2 M 0.3,2 2,-1.5 M -0.3,2 -2,-1.5 M 0.3,-2 2,-1.5 M -0.3,-2 -2,-1.5';
+				var symbol = google.maps.SymbolPath.FORWARD_CLOSED_ARROW;
+				var marker_color = '#992200';
+				var path_color = '#ef5611';
+				var trails = new Object;
+				var map;
+				var hpath = new google.maps.Polyline({
+					strokeColor: marker_color,
+					strokeWeight: 3,
+					strokeOpacity: 0.8
 				});
-				markers[module_id].setPosition(latlong);
-				//map.setCenter(latlong);
-			}
-			google.maps.event.addDomListener(window, 'load', initMap);
+				var markers = new Object;
+				var active = new google.maps.Marker();
+			
+				function initMap() {
+					map = new google.maps.Map(document.getElementById("map"),mapProp);
+					active.setMap(map);
+					hpath.setMap(map)
+				}
+				function updateMapSize() {
+					var mapElement = document.getElementById('map');
+					var divMap = mapElement.parentNode;
+					divMap.style.height = window.innerHeight - divMap.offsetTop;
+				}
+				function showActiveMarker(lat, lng) {
+					var latlong = new google.maps.LatLng(lat, lng);
+					active.setPosition(latlong);
+					active.setVisible(true);
+				}
+				function hideActiveMarker() {
+					active.setVisible(false);
+				}
+				function showHistoricalTrip(start, stop) {
+					var path = new Array;
+					var waypoint = document.getElementById(start);
+				
+					while(waypoint.getAttribute('timestamp') <= stop) {
+						path.push(new google.maps.LatLng(waypoint.getAttribute('lat'), waypoint.getAttribute('long')))
+						waypoint = waypoint.nextSibling;
+					}
+					hpath.setPath(path);
+					hpath.setVisible(true);
+				}
+				function hideHistoricalTrip() {
+					hpath.setVisible(false);
+				}
+			
+				function updateMarker(gps_msg) {
+					var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
+					//update trail
+					var module_id = gps_msg.module_id;
+					if(!trails[module_id]) {
+						trails[module_id] = new Object;
+						trails[module_id].trip = new Array;
+						trails[module_id].trail = new google.maps.Polyline({
+							strokeColor: path_color,
+							strokeWeight: 3,
+							strokeOpacity: 0.8
+						});
+						trails[module_id].trail.setMap(map);
+					}
+					trails[module_id].trip.push(latlong)
+					if (trails[module_id].trip.length > 10) {
+						trails[module_id].trip.shift();
+					}
+					trails[module_id].trail.setPath(trails[module_id].trip);
+					//update marker
+					if(!markers[module_id]) {
+						markers[module_id] = new google.maps.Marker();
+						markers[module_id].setMap(map);
+					}
+					markers[module_id].setIcon({
+						path: symbol,
+						strokeColor: marker_color,
+						strokeWeight: 2,
+						scale: 5,
+						rotation: gps_msg.track - gps_msg.magv
+					});
+					markers[module_id].setPosition(latlong);
+					//map.setCenter(latlong);
+				}
+				google.maps.event.addDomListener(window, 'load', initMap);
+			})();
 		</script>
 		<!-- Google Maps //-->
 	</head>
