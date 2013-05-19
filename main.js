@@ -33,7 +33,7 @@ server.listen(80);
 app.use(express.static(__dirname + '/'));
 app.use(function(req, res, next){
 	//res.send(404, 'Sorry cant find that!');
-	res.status(404).sendfile('img/404.svg');
+	res.status(404).sendfile('notfound.html');
 });
 app.get('/', function (req, res) {
 	console.log('[HTTP]'.grey, req.path);

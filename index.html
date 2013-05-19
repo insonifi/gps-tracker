@@ -79,7 +79,7 @@
 				var arEndDate = re.exec(strEndDate);
 				var endDate = new Date(Date.UTC(arEndDate[5], --arEndDate[4],
 					arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
-				
+			
 				var module_id = document.querySelector('#modules-id').value;
 				console.info('[query]', module_id, '%s ... %s', startDate, endDate);
 				socket.emit('query', {module_id: module_id, start: startDate.valueOf(), end: endDate.valueOf()});
@@ -94,12 +94,12 @@
 					row.setAttribute(property, message[property]);
 				}
 				row.onmouseover = function () {
-					showActiveMarker(message.lat, message.long);
+					gmap.howActiveMarker(message.lat, message.long);
 				}
 				row.onmouseout = function () {
-					hideActiveMarker();
+					gmap.hideActiveMarker();
 				}
-				
+			
 				var time = row.insertCell(-1);
 				var g_time = new Date(parseInt(message.timestamp));
 				if(tableName == 'updates-table') {
@@ -112,46 +112,46 @@
 						+ ' <b>' + g_time.getHours() + ':' + g_time.getMinutes() + '</b>';
 				}
 				time.classList.add('q-time');
-				
+			
 				var address = row.insertCell(-1);
 				address.textContent = message.address;
 				address.classList.add('q-address');
-				
+			
 				var speed = row.insertCell(-1);
 				speed.textContent = message.kph + ' km/h';
 				speed.classList.add('q-speed');
-				
+			
 				table.appendChild(row);
 			}
 			function newWaypoint(data) {
-					var message = document.createElement('div');
-					message.classList.add('q-row');
-					//time
-					var time = document.createElement('span');
-					var g_time = new Date(data.timestamp);
-					time.textContent = g_time.getHours() + ':' + g_time.getMinutes();;
-					time.classList.add('q-time-now');
-					message.appendChild(time);
-					//speed
-					var kphArr = data.kph.split('.');
-					var speed = document.createElement('span');
-					speed.classList.add('q-speed-now');
-					var integer = document.createElement('span');
-					integer.style.fontSize = '1.2em';
-					integer.textContent = kphArr[0];
-					var fraction = document.createElement('span');
-					fraction.style.fontSize = '0.6em';
-					fraction.textContent = kphArr[1];
-					speed.appendChild(integer);
-					speed.appendChild(fraction);
-					message.appendChild(speed);
-					//address
-					var address = document.createElement('span');
-					address.textContent = data.address;
-					address.classList.add('q-address-now');
-					message.appendChild(address);
-					//display message in info box
-					$('#info').info('update', message.outerHTML, 'update');
+				var message = document.createElement('div');
+				message.classList.add('q-row');
+				//time
+				var time = document.createElement('span');
+				var g_time = new Date(data.timestamp);
+				time.textContent = g_time.getHours() + ':' + g_time.getMinutes();;
+				time.classList.add('q-time-now');
+				message.appendChild(time);
+				//speed
+				var kphArr = data.kph.split('.');
+				var speed = document.createElement('span');
+				speed.classList.add('q-speed-now');
+				var integer = document.createElement('span');
+				integer.style.fontSize = '1.2em';
+				integer.textContent = kphArr[0];
+				var fraction = document.createElement('span');
+				fraction.style.fontSize = '0.6em';
+				fraction.textContent = kphArr[1];
+				speed.appendChild(integer);
+				speed.appendChild(fraction);
+				message.appendChild(speed);
+				//address
+				var address = document.createElement('span');
+				address.textContent = data.address;
+				address.classList.add('q-address-now');
+				message.appendChild(address);
+				//display message in info box
+				$('#info').info('update', message.outerHTML, 'update');
 			}
 			function flushTable(tableName) {
 				var table = document.getElementById(tableName);
@@ -226,17 +226,17 @@
 					query.style.display = 'none';
 					trips.style.display = 'table';
 				}
-				
+			
 				detectRoutes();
 
 			}
 			function detectRoutes() {
 				var routesCount = 0;
 				var query = document.getElementById('query-table');
-				
+			
 				var trips = document.getElementById('trips-table');
 				var tripCoords = new Array;
-				
+			
 				var waypointHtml = query.firstChild;
 				//do we have any waypoint?
 				if (waypointHtml == undefined) return;
@@ -250,7 +250,7 @@
 					last = start;
 				var calcTime,
 					lastTime;
-				
+			
 				while (waypointHtml) {
 					var waypoint =  {
 						time: parseInt(waypointHtml.getAttribute('timestamp')),
@@ -259,7 +259,7 @@
 						lng: waypointHtml.getAttribute('long')
 					};
 					//tripCoords.push([waypoint.lat, waypoint.lng]);
-					
+				
 					//calculate
 					curTime = parseInt(waypoint.time);
 					calcTime = curTime - last.time;
@@ -274,10 +274,10 @@
 					//next iteration
 					waypointHtml = waypointHtml.nextSibling;
 				}
-				console.info('[detectRoutes]', 'Distinguished', routesCount, 'routes');
-				$('#info').info('update', 'Distinguished ' + routesCount + ' routes');
+				console.info('[detectRoutes]', 'Detected', routesCount, 'routes');
+				$('#info').info('update', 'Detected ' + routesCount + ' routes');
 			}
-			
+		
 			function tripRow(start, stop, coords) {
 				var trip = document.createElement('tr');
 				trip.classList.add('q-row');
@@ -287,23 +287,23 @@
 				cell_startTime.innerHTML = bTime.getDate() + '.' + (bTime.getMonth()+1) + '.' + bTime.getFullYear()
 						+ ' <b>' + bTime.getHours() + ':' + bTime.getMinutes() + '</b>';
 				trip.setAttribute('starttime', start.time);
-				
+			
 				var cell_startAddress = trip.insertCell(-1);
 				cell_startAddress.textContent = start.address;
 				cell_startAddress.classList.add('q-address');
-				
+			
 				var cell_stopTime = trip.insertCell(-1);
 				cell_stopTime.classList.add('q-time');
 				var eTime = new Date(stop.time);
 				cell_stopTime.textContent = eTime.getHours() + ':' + eTime.getMinutes();
 				trip.setAttribute('stoptime', stop.time);
-				
+			
 				var cell_stopAddress = trip.insertCell(-1);
 				cell_stopAddress.classList.add('q-address');
 				cell_stopAddress.textContent= stop.address;
-				
+			
 				//trip.setAttribute('coordinates', coords.join('_'));
-				
+			
 				trip.onclick = function() {
 					showHistoricalTrip(start.time, stop.time);
 				}
@@ -327,6 +327,7 @@
 				}
 				$('#info').info('update', 'Printing');
 			}
+
 			(function( $ ) {
 				var methods = {
 					init: function( options ) {
@@ -371,7 +372,7 @@
 		</script>
 		<!-- Google Maps //-->
 		<script>
-			(function () {
+			gmap = (function () {
 				var mapCenter = new google.maps.LatLng(56.9496,24.1040);//Riga
 				var mapProp = {
 					center: mapCenter,
