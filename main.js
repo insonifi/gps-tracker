@@ -127,7 +127,7 @@ var serverGPS = net.createServer(function(c) { //'connection' listener
 				continue
 			}
 			if (line[0] == 'Q') {
-				console.log('[GPS]'.grey, vId, 'seen at %s', (new Date).toISOString());
+				console.log('[GPS]'.grey, vId, 'seen at', (new Date).toISOString());
 				continue
 			}
 			if (line[0] == 'M') {

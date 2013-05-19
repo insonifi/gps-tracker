@@ -425,34 +425,35 @@
 			function updateMarker(gps_msg) {
 				var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
 				//update trail
-				if(!trails[gps_msg.id]) {
-					trails[gps_msg.id] = new Object;
-					trails[gps_msg.id].trip = new Array;
-					trails[gps_msg.id].trail = new google.maps.Polyline({
+				var module_id = gps_msg.module_id;
+				if(!trails[module_id]) {
+					trails[module_id] = new Object;
+					trails[module_id].trip = new Array;
+					trails[module_id].trail = new google.maps.Polyline({
 						strokeColor: '#ef5611',
 						strokeWeight: 3,
 						strokeOpacity: 0.8
 					});
-					trails[gps_msg.id].trail.setMap(map);
+					trails[module_id].trail.setMap(map);
 				}
-				trails[gps_msg.id].trip.push(latlong)
-				if (trails[gps_msg.id].trip.length > 10) {
-					trails[gps_msg.id].trip.shift();
+				trails[module_id].trip.push(latlong)
+				if (trails[module_id].trip.length > 10) {
+					trails[module_id].trip.shift();
 				}
-				trails[gps_msg.id].trail.setPath(trails[gps_msg.id].trip);
+				trails[module_id].trail.setPath(trails[module_id].trip);
 				//update marker
-				if(!markers[gps_msg.id]) {
-					markers[gps_msg.id] = new google.maps.Marker();
-					markers[gps_msg.id].setMap(map);
+				if(!markers[module_id]) {
+					markers[module_id] = new google.maps.Marker();
+					markers[module_id].setMap(map);
 				}
-				markers[gps_msg.id].setIcon({
+				markers[module_id].setIcon({
 					path: symbol,
 					strokeColor: '#ef5611',
 					strokeWeight: 2,
 					scale: 5,
 					rotation: gps_msg.track - gps_msg.magv
 				});
-				markers[gps_msg.id].setPosition(latlong);
+				markers[module_id].setPosition(latlong);
 				//map.setCenter(latlong);
 			}
 			google.maps.event.addDomListener(window, 'load', initMap);

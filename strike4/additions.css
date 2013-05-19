@@ -3,7 +3,7 @@
 .q-row:hover {background: #ffffc8;}
 .q-time {border: #df7611; color: black; max-width: 5em; text-align: center;}
 .q-time-now {
-	font-size: smaller;
+	font-size: xx-small;
 	border: #df7611;
 	color: grey;
 	padding-right: 0.5em;
