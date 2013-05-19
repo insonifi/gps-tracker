@@ -110,7 +110,7 @@ var serverGPS = net.createServer(function(c) { //'connection' listener
 			console.log('[GPS]'.grey, vId, 'disconnected'.grey);
 			vId = null;
 		});
-	c.write('GPS Tracker 0.1\r\n'); //greet client
+	c.write('GpsTsc v3.2.15\r\n'); //greet client
 	c.on('data', function(chunk) {
 		var string = chunk.toString();
 		var lines = string.split('\r\n');
@@ -119,12 +119,24 @@ var serverGPS = net.createServer(function(c) { //'connection' listener
 			//console.info('> %s', line);
 			if (line[0] == 'I') { //id
 				vId = line.slice(1);
-				console.log('[GPS]'.grey, vId,'connected'.green);
+				console.log('[GPS]'.grey, vId, 'connected'.green);
+				continue
 			}
 			if (line[0] == 'D') { //expect to download batch of records//D####
+				console.log('[GPS]'.grey, vId, 'uploads %s coordinates', line.slice(1));
+				continue
 			}
+			if (line[0] == 'Q') {
+				console.log('[GPS]'.grey, vId, 'seen at %s', (new Date).toISOString());
+				continue
+			}
+			if (line[0] == 'M') {
+				//not implemeted, don't what this is:
+				//M98:000000,V,9900.000,N,00000.000,W,000.0,000,000000,010*47
+				continue
 			if (line[0] == '$') {
-				queue.add(vId + line);
+				queue.add(vId + line); //add to parse queue
+\				continue
 			}
 		}
 		c.write('0\r\n'); //respond back
