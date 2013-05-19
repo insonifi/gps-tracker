@@ -134,6 +134,7 @@ var serverGPS = net.createServer(function(c) { //'connection' listener
 				//not implemeted, don't what this is:
 				//M98:000000,V,9900.000,N,00000.000,W,000.0,000,000000,010*47
 				continue
+			}
 			if (line[0] == '$') {
 				queue.add(vId + line); //add to parse queue
 				continue
