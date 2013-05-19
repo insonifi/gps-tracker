@@ -14,320 +14,322 @@
 		<script>
 			var threshold = 5 * 60 * 1000 //5min  -- threshold to distinguish trips
 			var socket = io.connect('http://' + document.domain);
-			socket.on('handshake', function (data) {
-				console.log('[connected]', data.welcome);
-				$('#info').info('update', data.welcome, 'info');
-				getList();
-			});
-			//query finished
-			socket.on('count', function (count) {
-				console.log('[query]', 'found ' + count);
-				$('#info').info('update', 'found ' + count, 'info');
-				setTimeout(function () {
-					$('#tabs').tabs('refresh');
-				}, 500);
-			});
-			//display server time
-			socket.on('clock', function (time) {
-				console.info('[clock]', time);
-				$('#clock').text((new Date(time)).toLocaleTimeString());
-			});
-			//query
-			socket.on('query-waypoint', function (data) {
-				console.info('query', data);
-				if(undefined != data) 
-					showWaypoint(data, 'query-table');
-			});
-			//got new live waypoint
-			socket.on('update-waypoint', function (data) {
-				console.info('[waypoint]',data);
-				if(undefined != data) {
-					//update marker on map
-					updateMarker(data);
-					//show in info box
-					newWaypoint(data);
-					//show new way point in table
-					showWaypoint(data, 'updates-table');
-					$('#tabs').tabs('refresh');
-				}
-			});
-			//got tracked modules list
-			socket.on('modulelist', function (list) {
-				console.info('[list]', list);
-				var select = document.getElementById('modules-id');
-				select.innerHTML = '';
-				for (var i = 0; i < list.length; i++){
-					var newid = document.createElement('option');
-					newid.value = list[i];
-					newid.textContent = list[i];
-					select.appendChild(newid);
-				}
-				displayList(list);
-			});
-			function query() {
-				flushTable('query-table');
-				flushTable('trips-table');
-				var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
-				var timeoffset = (new Date).getTimezoneOffset() / 60
-				//parse start date
-				var strStartDate = document.querySelector('#start-date').value;
-				var arStartDate = re.exec(strStartDate);
-				var startDate = new Date(Date.UTC(arStartDate[5], --arStartDate[4],
-					arStartDate[3],  timeoffset + parseInt(arStartDate[1]), arStartDate[2]));
-				//parse end date
-				var strEndDate = document.querySelector('#end-date').value;
-				var arEndDate = re.exec(strEndDate);
-				var endDate = new Date(Date.UTC(arEndDate[5], --arEndDate[4],
-					arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
-			
-				var module_id = document.querySelector('#modules-id').value;
-				console.info('[query]', module_id, '%s ... %s', startDate, endDate);
-				socket.emit('query', {module_id: module_id, start: startDate.valueOf(), end: endDate.valueOf()});
-			}
-			//render way point in corresponding table
-			function showWaypoint(message, tableName) {
-				var table = document.getElementById(tableName);
-				var row = document.createElement('tr');
-				row.classList.add('q-row');
-				row.id = message.timestamp;
-				for (property in message) {
-					row.setAttribute(property, message[property]);
-				}
-				row.onmouseover = function () {
-					gmap.howActiveMarker(message.lat, message.long);
-				}
-				row.onmouseout = function () {
-					gmap.hideActiveMarker();
-				}
-			
-				var time = row.insertCell(-1);
-				var g_time = new Date(parseInt(message.timestamp));
-				if(tableName == 'updates-table') {
-					if(table.childNodes.length > 10) { //limit to last 10 updates
-						table.removeChild(table.firstChild);
+			(function () {
+				socket.on('handshake', function (data) {
+					console.log('[connected]', data.welcome);
+					$('#info').info('update', data.welcome, 'info');
+					core.getList();
+				});
+				//query finished
+				socket.on('count', function (count) {
+					console.log('[query]', 'found ' + count);
+					$('#info').info('update', 'found ' + count, 'info');
+					setTimeout(function () {
+						$('#tabs').tabs('refresh');
+					}, 500);
+				});
+				//display server time
+				socket.on('clock', function (time) {
+					console.info('[clock]', time);
+					$('#clock').text((new Date(time)).toLocaleTimeString());
+				});
+				//query
+				socket.on('query-waypoint', function (data) {
+					console.info('query', data);
+					if(undefined != data) 
+						core.showWaypoint(data, 'query-table');
+				});
+				//got new live waypoint
+				socket.on('update-waypoint', function (data) {
+					console.info('[waypoint]',data);
+					if(undefined != data) {
+						//update marker on map
+						mapctl.updateMarker(data);
+						//show in info box
+						core.newWaypoint(data);
+						//show new way point in table
+						core.showWaypoint(data, 'updates-table');
+						$('#tabs').tabs('refresh');
 					}
-					time.textContent = g_time.getHours() + ':' + g_time.getMinutes();
-				} else {
-					time.innerHTML = g_time.getDate() + '.' + (g_time.getMonth()+1) + '.' + g_time.getFullYear()
-						+ ' <b>' + g_time.getHours() + ':' + g_time.getMinutes() + '</b>';
-				}
-				time.classList.add('q-time');
+				});
+				//got tracked modules list
+				socket.on('modulelist', function (list) {
+					console.info('[list]', list);
+					var select = document.getElementById('modules-id');
+					select.innerHTML = '';
+					for (var i = 0; i < list.length; i++){
+						var newid = document.createElement('option');
+						newid.value = list[i];
+						newid.textContent = list[i];
+						select.appendChild(newid);
+					}
+					core.displayList(list);
+				});
+			})();
+			core = {
+				query: function () {
+					core.flushTable('query-table');
+					core.flushTable('trips-table');
+					var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
+					var timeoffset = (new Date).getTimezoneOffset() / 60
+					//parse start date
+					var strStartDate = document.querySelector('#start-date').value;
+					var arStartDate = re.exec(strStartDate);
+					var startDate = new Date(Date.UTC(arStartDate[5], --arStartDate[4],
+						arStartDate[3],  timeoffset + parseInt(arStartDate[1]), arStartDate[2]));
+					//parse end date
+					var strEndDate = document.querySelector('#end-date').value;
+					var arEndDate = re.exec(strEndDate);
+					var endDate = new Date(Date.UTC(arEndDate[5], --arEndDate[4],
+						arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
 			
-				var address = row.insertCell(-1);
-				address.textContent = message.address;
-				address.classList.add('q-address');
+					var module_id = document.querySelector('#modules-id').value;
+					console.info('[query]', module_id, '%s ... %s', startDate, endDate);
+					socket.emit('query', {module_id: module_id, start: startDate.valueOf(), end: endDate.valueOf()});
+				},
+				//render way point in corresponding table
+				showWaypoint: function (message, tableName) {
+					var table = document.getElementById(tableName);
+					var row = document.createElement('tr');
+					row.classList.add('q-row');
+					row.id = message.timestamp;
+					for (property in message) {
+						row.setAttribute(property, message[property]);
+					}
+					row.onmouseover = function () {
+						mapctl.showActiveMarker(message.lat, message.long);
+					}
+					row.onmouseout = function () {
+						mapctl.hideActiveMarker();
+					}
 			
-				var speed = row.insertCell(-1);
-				speed.textContent = message.kph + ' km/h';
-				speed.classList.add('q-speed');
-			
-				table.appendChild(row);
-			}
-			function newWaypoint(data) {
-				var message = document.createElement('div');
-				message.classList.add('q-row');
-				//time
-				var time = document.createElement('span');
-				var g_time = new Date(data.timestamp);
-				time.textContent = g_time.getHours() + ':' + g_time.getMinutes();;
-				time.classList.add('q-time-now');
-				message.appendChild(time);
-				//speed
-				var kphArr = data.kph.split('.');
-				var speed = document.createElement('span');
-				speed.classList.add('q-speed-now');
-				var integer = document.createElement('span');
-				integer.style.fontSize = '1.2em';
-				integer.textContent = kphArr[0];
-				var fraction = document.createElement('span');
-				fraction.style.fontSize = '0.6em';
-				fraction.textContent = kphArr[1];
-				speed.appendChild(integer);
-				speed.appendChild(fraction);
-				message.appendChild(speed);
-				//address
-				var address = document.createElement('span');
-				address.textContent = data.address;
-				address.classList.add('q-address-now');
-				message.appendChild(address);
-				//display message in info box
-				$('#info').info('update', message.outerHTML, 'update');
-			}
-			function flushTable(tableName) {
-				var table = document.getElementById(tableName);
-				table.innerHTML = '';
-				/*while (table.lastChild) {
-					table.removeChild(table.lastChild);
-				}*/
-			}
-			function updateList() {
-				var table = document.getElementById('modulelist-table');
-				var changes = {
-					add: new Array,
-					remove: new Array
-				}
-				var id;
-				for(var i = 0; i < table.childNodes.length; i++) {
-					node = table.childNodes[i];
-					id = node.querySelector('input').value;
-					if ('' == id) continue;
-					if('none' == node.style.display) {
-						changes.remove.push(id);
+					var time = row.insertCell(-1);
+					var g_time = new Date(parseInt(message.timestamp));
+					if(tableName == 'updates-table') {
+						if(table.childNodes.length > 10) { //limit to last 10 updates
+							table.removeChild(table.firstChild);
+						}
+						time.textContent = g_time.getHours() + ':' + g_time.getMinutes();
 					} else {
-						changes.add.push(id);
+						time.innerHTML = g_time.getDate() + '.' + (g_time.getMonth()+1) + '.' + g_time.getFullYear()
+							+ ' <b>' + g_time.getHours() + ':' + g_time.getMinutes() + '</b>';
 					}
-				}
-				console.info('[updateList] update', 'add:',changes.add, 'remove', changes.remove);
-				$('#info').info('update', 'Modules list updated');
-				socket.emit('update-modulelist', changes);
-				getList();
-			}
-			function getList() {
-				socket.emit('get-modulelist');
-			}
-			function displayList(list) {
-				flushTable('modulelist-table');
-				for (var i = 0; i < list.length; i++) {
-					addModuleId(list[i], editable = false);
+					time.classList.add('q-time');
+			
+					var address = row.insertCell(-1);
+					address.textContent = message.address;
+					address.classList.add('q-address');
+			
+					var speed = row.insertCell(-1);
+					speed.textContent = message.kph + ' km/h';
+					speed.classList.add('q-speed');
+			
+					table.appendChild(row);
+				},
+				newWaypoint: function (data) {
+					var message = document.createElement('div');
+					message.classList.add('q-row');
+					//time
+					var time = document.createElement('span');
+					var g_time = new Date(data.timestamp);
+					time.textContent = g_time.getHours() + ':' + g_time.getMinutes();;
+					time.classList.add('q-time-now');
+					message.appendChild(time);
+					//speed
+					var kphArr = data.kph.split('.');
+					var speed = document.createElement('span');
+					speed.classList.add('q-speed-now');
+					var integer = document.createElement('span');
+					integer.style.fontSize = '1.2em';
+					integer.textContent = kphArr[0];
+					var fraction = document.createElement('span');
+					fraction.style.fontSize = '0.6em';
+					fraction.textContent = kphArr[1];
+					speed.appendChild(integer);
+					speed.appendChild(fraction);
+					message.appendChild(speed);
+					//address
+					var address = document.createElement('span');
+					address.textContent = data.address;
+					address.classList.add('q-address-now');
+					message.appendChild(address);
+					//display message in info box
+					$('#info').info('update', message.outerHTML, 'update');
+				},
+				flushTable: function (tableName) {
+					var table = document.getElementById(tableName);
+					table.innerHTML = '';
+					/*while (table.lastChild) {
+						table.removeChild(table.lastChild);
+					}*/
+				},
+				updateList: function () {
+					var table = document.getElementById('modulelist-table');
+					var changes = {
+						add: [],
+						remove: []
+					}
+					var id;
+					for(var i = 0; i < table.childNodes.length; i++) {
+						node = table.childNodes[i];
+						id = node.querySelector('input').value;
+						if ('' == id) continue;
+						if('none' == node.style.display) {
+							changes.remove.push(id);
+						} else {
+							changes.add.push(id);
+						}
+					}
+					console.info('[updateList] update', 'add:',changes.add, 'remove', changes.remove);
+					$('#info').info('update', 'Modules list updated');
+					socket.emit('update-modulelist', changes);
+					core.getList();
+				},
+				getList: function () {
+					socket.emit('get-modulelist');
+				},
+				displayList: function (list) {
+					core.flushTable('modulelist-table');
+					for (var i = 0; i < list.length; i++) {
+						core.addModuleId(list[i], editable = false);
+					}
+				},
+				addModuleId: function (item, editable) {
+					var table = document.getElementById('modulelist-table');
+					var row = document.createElement('tr');
+					var cell = row.insertCell(-1);
+					//text field
+					var input = document.createElement('input');
+					input.value = (typeof(item) == 'object' ? '' : item);
+					input.readOnly = editable == false ? true : false;
+					input.type = 'tel';
+					//remove button
+					var button = document.createElement('input');
+					button.type = 'button'; button.value = 'x';
+					//assemble
+					cell.appendChild(input);
+					cell.appendChild(button);
+					table.appendChild(row);
+					$(function () {
+						$('td > input[type=\'button\']').button().click(core.removeRow);
+					});
+				},
+				removeRow: function () {
+					var row = this.parentNode.parentNode;
+					row.style.display = 'none';
+				},
+				toggleQuery: function () {
+					var query = document.getElementById('query-table');
+					var trips = document.getElementById('trips-table');
+					//toggle
+					if (query.style.display == 'none') {
+						query.style.display = 'table';
+						trips.style.display = 'none';
+					} else {
+						query.style.display = 'none';
+						trips.style.display = 'table';
+					}
+			
+					core.detectRoutes();
+
+				},
+				detectRoutes: function () {
+					var routesCount = 0;
+					var query = document.getElementById('query-table');
+			
+					var trips = document.getElementById('trips-table');
+					var tripCoords = [];
+			
+					var waypointHtml = query.firstChild;
+					//do we have any waypoint?
+					if (waypointHtml == undefined) return;
+					var waypoint =  {
+							time: parseInt(waypointHtml.getAttribute('timestamp')),
+							address: waypointHtml.getAttribute('address'),
+							lat: waypointHtml.getAttribute('lat'),
+							lng: waypointHtml.getAttribute('long')
+						};
+					var start = waypoint,
+						last = start;
+					var calcTime,
+						lastTime;
+			
+					while (waypointHtml) {
+						var waypoint =  {
+							time: parseInt(waypointHtml.getAttribute('timestamp')),
+							address: waypointHtml.getAttribute('address'),
+							lat: waypointHtml.getAttribute('lat'),
+							lng: waypointHtml.getAttribute('long')
+						};
+						//tripCoords.push([waypoint.lat, waypoint.lng]);
+				
+						//calculate
+						curTime = parseInt(waypoint.time);
+						calcTime = curTime - last.time;
+						if(calcTime > threshold) {
+							routesCount++
+							//tripCoords.push([last.lat, last.lng]);
+							trips.appendChild(core.tripRow(start, last, tripCoords));
+							//tripCoords = [];
+							start = waypoint;
+						}
+						last = waypoint
+						//next iteration
+						waypointHtml = waypointHtml.nextSibling;
+					}
+					console.info('[detectRoutes]', 'Detected', routesCount, 'routes');
+					$('#info').info('update', 'Detected ' + routesCount + ' routes');
+				},
+				tripRow: function (start, stop, coords) {
+					var trip = document.createElement('tr');
+					trip.classList.add('q-row');
+					var cell_startTime = trip.insertCell(-1);
+					cell_startTime.classList.add('q-time');
+					var bTime = new Date(start.time);
+					cell_startTime.innerHTML = bTime.getDate() + '.' + (bTime.getMonth()+1) + '.' + bTime.getFullYear()
+							+ ' <b>' + bTime.getHours() + ':' + bTime.getMinutes() + '</b>';
+					trip.setAttribute('starttime', start.time);
+			
+					var cell_startAddress = trip.insertCell(-1);
+					cell_startAddress.textContent = start.address;
+					cell_startAddress.classList.add('q-address');
+			
+					var cell_stopTime = trip.insertCell(-1);
+					cell_stopTime.classList.add('q-time');
+					var eTime = new Date(stop.time);
+					cell_stopTime.textContent = eTime.getHours() + ':' + eTime.getMinutes();
+					trip.setAttribute('stoptime', stop.time);
+			
+					var cell_stopAddress = trip.insertCell(-1);
+					cell_stopAddress.classList.add('q-address');
+					cell_stopAddress.textContent= stop.address;
+			
+					//trip.setAttribute('coordinates', coords.join('_'));
+			
+					trip.onclick = function() {
+						mapctl.showTripHistory(start.time, stop.time);
+					}
+					return trip;
+				},
+				printReport: function () {
+					var trips = document.getElementById('trips-table');
+					var query = document.getElementById('query-table');
+					var report;
+					if (query.style.display == 'none') {
+						report = trips;
+					} else {
+						report = query;
+					}
+					//var printFrame = document.createElement('iframe');
+					var printFrame = document.getElementById('print-frame');
+					with (printFrame) {
+						contentDocument.write('<link type="text/css" href="./strike4/print.css" rel="stylesheet" />');
+						contentDocument.write(report.outerHTML);
+						contentWindow.print();
+					}
+					$('#info').info('update', 'Printing');
 				}
 			};
-			function addModuleId(item, editable) {
-				var table = document.getElementById('modulelist-table');
-				var row = document.createElement('tr');
-				var cell = row.insertCell(-1);
-				//text field
-				var input = document.createElement('input');
-				input.value = (typeof(item) == 'object' ? '' : item);
-				input.readOnly = editable == false ? true : false;
-				input.type = 'tel';
-				//remove button
-				var button = document.createElement('input');
-				button.type = 'button'; button.value = 'x';
-				//assemble
-				cell.appendChild(input);
-				cell.appendChild(button);
-				table.appendChild(row);
-				$(function () {
-					$('td > input[type=\'button\']').button().click(removeRow);
-				});
-			}
-			function removeRow() {
-				var row = this.parentNode.parentNode;
-				row.style.display = 'none';
-			}
-			function toggleQuery() {
-				var query = document.getElementById('query-table');
-				var trips = document.getElementById('trips-table');
-				//toggle
-				if (query.style.display == 'none') {
-					query.style.display = 'table';
-					trips.style.display = 'none';
-				} else {
-					query.style.display = 'none';
-					trips.style.display = 'table';
-				}
-			
-				detectRoutes();
-
-			}
-			function detectRoutes() {
-				var routesCount = 0;
-				var query = document.getElementById('query-table');
-			
-				var trips = document.getElementById('trips-table');
-				var tripCoords = new Array;
-			
-				var waypointHtml = query.firstChild;
-				//do we have any waypoint?
-				if (waypointHtml == undefined) return;
-				var waypoint =  {
-						time: parseInt(waypointHtml.getAttribute('timestamp')),
-						address: waypointHtml.getAttribute('address'),
-						lat: waypointHtml.getAttribute('lat'),
-						lng: waypointHtml.getAttribute('long')
-					};
-				var start = waypoint,
-					last = start;
-				var calcTime,
-					lastTime;
-			
-				while (waypointHtml) {
-					var waypoint =  {
-						time: parseInt(waypointHtml.getAttribute('timestamp')),
-						address: waypointHtml.getAttribute('address'),
-						lat: waypointHtml.getAttribute('lat'),
-						lng: waypointHtml.getAttribute('long')
-					};
-					//tripCoords.push([waypoint.lat, waypoint.lng]);
-				
-					//calculate
-					curTime = parseInt(waypoint.time);
-					calcTime = curTime - last.time;
-					if(calcTime > threshold) {
-						routesCount++
-						//tripCoords.push([last.lat, last.lng]);
-						trips.appendChild(tripRow(start, last, tripCoords));
-						//tripCoords = new Array;
-						start = waypoint;
-					}
-					last = waypoint
-					//next iteration
-					waypointHtml = waypointHtml.nextSibling;
-				}
-				console.info('[detectRoutes]', 'Detected', routesCount, 'routes');
-				$('#info').info('update', 'Detected ' + routesCount + ' routes');
-			}
-		
-			function tripRow(start, stop, coords) {
-				var trip = document.createElement('tr');
-				trip.classList.add('q-row');
-				var cell_startTime = trip.insertCell(-1);
-				cell_startTime.classList.add('q-time');
-				var bTime = new Date(start.time);
-				cell_startTime.innerHTML = bTime.getDate() + '.' + (bTime.getMonth()+1) + '.' + bTime.getFullYear()
-						+ ' <b>' + bTime.getHours() + ':' + bTime.getMinutes() + '</b>';
-				trip.setAttribute('starttime', start.time);
-			
-				var cell_startAddress = trip.insertCell(-1);
-				cell_startAddress.textContent = start.address;
-				cell_startAddress.classList.add('q-address');
-			
-				var cell_stopTime = trip.insertCell(-1);
-				cell_stopTime.classList.add('q-time');
-				var eTime = new Date(stop.time);
-				cell_stopTime.textContent = eTime.getHours() + ':' + eTime.getMinutes();
-				trip.setAttribute('stoptime', stop.time);
-			
-				var cell_stopAddress = trip.insertCell(-1);
-				cell_stopAddress.classList.add('q-address');
-				cell_stopAddress.textContent= stop.address;
-			
-				//trip.setAttribute('coordinates', coords.join('_'));
-			
-				trip.onclick = function() {
-					showHistoricalTrip(start.time, stop.time);
-				}
-				return trip;
-			}
-			function printReport() {
-				var trips = document.getElementById('trips-table');
-				var query = document.getElementById('query-table');
-				var report;
-				if (query.style.display == 'none') {
-					report = trips;
-				} else {
-					report = query;
-				}
-				//var printFrame = document.createElement('iframe');
-				var printFrame = document.getElementById('print-frame');
-				with (printFrame) {
-					contentDocument.write('<link type="text/css" href="./strike4/print.css" rel="stylesheet" />');
-					contentDocument.write(report.outerHTML);
-					contentWindow.print();
-				}
-				$('#info').info('update', 'Printing');
-			}
-
 			(function( $ ) {
 				var methods = {
 					init: function( options ) {
@@ -372,7 +374,7 @@
 		</script>
 		<!-- Google Maps //-->
 		<script>
-			gmap = (function () {
+			(function () {
 				var mapCenter = new google.maps.LatLng(56.9496,24.1040);//Riga
 				var mapProp = {
 					center: mapCenter,
@@ -384,84 +386,85 @@
 				var symbol = google.maps.SymbolPath.FORWARD_CLOSED_ARROW;
 				var marker_color = '#992200';
 				var path_color = '#ef5611';
-				var trails = new Object;
+				var trails = {};
 				var map;
 				var hpath = new google.maps.Polyline({
 					strokeColor: marker_color,
 					strokeWeight: 3,
 					strokeOpacity: 0.8
 				});
-				var markers = new Object;
+				var markers = {};
 				var active = new google.maps.Marker();
-			
-				function initMap() {
-					map = new google.maps.Map(document.getElementById("map"),mapProp);
-					active.setMap(map);
-					hpath.setMap(map)
-				}
-				function updateMapSize() {
-					var mapElement = document.getElementById('map');
-					var divMap = mapElement.parentNode;
-					divMap.style.height = window.innerHeight - divMap.offsetTop;
-				}
-				function showActiveMarker(lat, lng) {
-					var latlong = new google.maps.LatLng(lat, lng);
-					active.setPosition(latlong);
-					active.setVisible(true);
-				}
-				function hideActiveMarker() {
-					active.setVisible(false);
-				}
-				function showHistoricalTrip(start, stop) {
-					var path = new Array;
-					var waypoint = document.getElementById(start);
 				
-					while(waypoint.getAttribute('timestamp') <= stop) {
-						path.push(new google.maps.LatLng(waypoint.getAttribute('lat'), waypoint.getAttribute('long')))
-						waypoint = waypoint.nextSibling;
-					}
-					hpath.setPath(path);
-					hpath.setVisible(true);
-				}
-				function hideHistoricalTrip() {
-					hpath.setVisible(false);
-				}
-			
-				function updateMarker(gps_msg) {
-					var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
-					//update trail
-					var module_id = gps_msg.module_id;
-					if(!trails[module_id]) {
-						trails[module_id] = new Object;
-						trails[module_id].trip = new Array;
-						trails[module_id].trail = new google.maps.Polyline({
-							strokeColor: path_color,
-							strokeWeight: 3,
-							strokeOpacity: 0.8
+				mapctl = {
+					initMap: function () {
+						map = new google.maps.Map(document.getElementById("map"),mapProp);
+						active.setMap(map);
+						hpath.setMap(map)
+					},
+					updateMapSize: function () {
+						var mapElement = document.getElementById('map');
+						var divMap = mapElement.parentNode;
+						divMap.style.height = window.innerHeight - divMap.offsetTop;
+					},
+					showActiveMarker: function (lat, lng) {
+						var latlong = new google.maps.LatLng(lat, lng);
+						active.setPosition(latlong);
+						active.setVisible(true);
+					},
+					hideActiveMarker: function () {
+						active.setVisible(false);
+					},
+					showTripHistory: function (start, stop) {
+						var path = [];
+						var waypoint = document.getElementById(start);
+				
+						while(waypoint.getAttribute('timestamp') <= stop) {
+							path.push(new google.maps.LatLng(waypoint.getAttribute('lat'), waypoint.getAttribute('long')))
+							waypoint = waypoint.nextSibling;
+						}
+						hpath.setPath(path);
+						hpath.setVisible(true);
+					},
+					hideTripHistory: function () {
+						hpath.setVisible(false);
+					},
+					updateMarker: function (gps_msg) {
+						var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
+						//update trail
+						var module_id = gps_msg.module_id;
+						if(!trails[module_id]) {
+							trails[module_id] = {};
+							trails[module_id].trip = [];
+							trails[module_id].trail = new google.maps.Polyline({
+								strokeColor: path_color,
+								strokeWeight: 3,
+								strokeOpacity: 0.8
+							});
+							trails[module_id].trail.setMap(map);
+						}
+						trails[module_id].trip.push(latlong)
+						if (trails[module_id].trip.length > 10) {
+							trails[module_id].trip.shift();
+						}
+						trails[module_id].trail.setPath(trails[module_id].trip);
+						//update marker
+						if(!markers[module_id]) {
+							markers[module_id] = new google.maps.Marker();
+							markers[module_id].setMap(map);
+						}
+						markers[module_id].setIcon({
+							path: symbol,
+							strokeColor: marker_color,
+							strokeWeight: 2,
+							scale: 5,
+							rotation: gps_msg.track - gps_msg.magv
 						});
-						trails[module_id].trail.setMap(map);
+						markers[module_id].setPosition(latlong);
+						//map.setCenter(latlong);
 					}
-					trails[module_id].trip.push(latlong)
-					if (trails[module_id].trip.length > 10) {
-						trails[module_id].trip.shift();
-					}
-					trails[module_id].trail.setPath(trails[module_id].trip);
-					//update marker
-					if(!markers[module_id]) {
-						markers[module_id] = new google.maps.Marker();
-						markers[module_id].setMap(map);
-					}
-					markers[module_id].setIcon({
-						path: symbol,
-						strokeColor: marker_color,
-						strokeWeight: 2,
-						scale: 5,
-						rotation: gps_msg.track - gps_msg.magv
-					});
-					markers[module_id].setPosition(latlong);
-					//map.setCenter(latlong);
 				}
-				google.maps.event.addDomListener(window, 'load', initMap);
+				google.maps.event.addDomListener(window, 'load', mapctl.initMap);
 			})();
 		</script>
 		<!-- Google Maps //-->
@@ -522,19 +525,19 @@
 				})
 			});
 			$(function () {
-				$('#query').button().click(query);
+				$('#query').button().click(core.query);
 			});
 			$(function () {
-				$('#radio').buttonset().change(toggleQuery);
+				$('#radio').buttonset().change(core.toggleQuery);
 			});
 			$(function () {
-				$('#update-list').button().click(updateList);
+				$('#update-list').button().click(core.updateList);
 			});
 			$(function () {
-				$('#append-list').button().click(addModuleId);
+				$('#append-list').button().click(core.addModuleId);
 			});
 			$(function () {
-				$('#print-report').button().click(printReport);
+				$('#print-report').button().click(core.printReport);
 			});
 			$(function() {
 				$('#tabs').tabs({
@@ -543,7 +546,7 @@
 							//getList();
 						}
 						if('#tabs-query' != ui.newTab.context.hash) {
-							hideHistoricalTrip();
+							mapctl.hideTripHistory();
 						}
 					}
 				});

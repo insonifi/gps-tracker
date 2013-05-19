@@ -45,6 +45,7 @@ input:focus {
 	padding: 5px;
 	border-radius: 5px;
 }
+#tabs {z-index: 1;}
 #map {
 	width: 100%;
 	min-height: 85%;
