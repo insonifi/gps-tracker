@@ -10,11 +10,14 @@ var colors = require('colors'),
 
 //provide connection to Mongo
 db.open(function(err, client_instance) {
-	if (err) error(err);
-	console.log('[database]'.grey, 'err:'.red, 'connected to database');
-	Proto.client = client_instance;
-	Proto.ready = true;
-	Proto.emit('connected');
+	if (err) {
+		error(err);
+	} else {
+		console.log('[database]'.grey, 'err:'.red, 'connected to database');
+		Proto.client = client_instance;
+		Proto.ready = true;
+		Proto.emit('connected');
+	}
 });
 
 function error(err, object) {
