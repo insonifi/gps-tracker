@@ -136,7 +136,7 @@ var serverGPS = net.createServer(function(c) { //'connection' listener
 				continue
 			if (line[0] == '$') {
 				queue.add(vId + line); //add to parse queue
-\				continue
+				continue
 			}
 		}
 		c.write('0\r\n'); //respond back
