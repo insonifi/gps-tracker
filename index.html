@@ -5,6 +5,7 @@
 		  src="https://maps.googleapis.com/maps/api/js?sensor=false">
 		</script>
 		<script src="/socket.io/socket.io.js"></script>
+		<script src="/md5.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
@@ -109,10 +110,18 @@
 						if(table.childNodes.length > 10) { //limit to last 10 updates
 							table.removeChild(table.firstChild);
 						}
-						time.textContent = g_time.getHours() + ':' + g_time.getMinutes();
+						time.textContent = g_time.getHours() + ':' + ("0" + g_time.getMinutes()).slice(-2);
 					} else {
-						time.innerHTML = g_time.getDate() + '.' + (g_time.getMonth()+1) + '.' + g_time.getFullYear()
-							+ ' <b>' + g_time.getHours() + ':' + g_time.getMinutes() + '</b>';
+						time.innerHTML = 
+							("0" + g_time.getDate()).slice(-2)
+							+ '.'
+							+ ("0" + (g_time.getMonth() + 1)).slice(-2)
+							+ '.' + g_time.getFullYear()
+							+ ' <b>'
+							+ g_time.getHours()
+							+ ':'
+							+ ("0" + g_time.getMinutes()).slice(-2)
+							+ '</b>';
 					}
 					time.classList.add('q-time');
 			
@@ -132,7 +141,7 @@
 					//time
 					var time = document.createElement('span');
 					var g_time = new Date(data.timestamp);
-					time.textContent = g_time.getHours() + ':' + g_time.getMinutes();;
+					time.textContent = g_time.getHours() + ':' + ("0" + g_time.getMinutes()).slice(-2);
 					time.classList.add('q-time-now');
 					message.appendChild(time);
 					//speed
@@ -167,21 +176,24 @@
 					var table = document.getElementById('modulelist-table');
 					var changes = {
 						add: [],
-						remove: []
+						remove: [],
+						hash: ''
 					}
 					var id;
 					for(var i = 0; i < table.childNodes.length; i++) {
 						node = table.childNodes[i];
-						id = node.querySelector('input').value;
-						if ('' == id) continue;
+						id = node.querySelector('input.module-id').value;
+						name = node.querySelector('input.module-name').value;
+						if ('' == id||'' == name) continue;
 						if('none' == node.style.display) {
-							changes.remove.push(id);
+							changes.remove.push({id: id});
 						} else {
-							changes.add.push(id);
+							changes.add.push({id: id, name: name});
 						}
 					}
 					console.info('[updateList] update', 'add:',changes.add, 'remove', changes.remove);
-					$('#info').info('update', 'Modules list updated');
+					$('#info').info('update', 'Update modules list');
+					changes.hash = md5(window.prompt('Password'));
 					socket.emit('update-modulelist', changes);
 					core.getList();
 				},
@@ -198,16 +210,28 @@
 					var table = document.getElementById('modulelist-table');
 					var row = document.createElement('tr');
 					var cell = row.insertCell(-1);
-					//text field
-					var input = document.createElement('input');
-					input.value = (typeof(item) == 'object' ? '' : item);
-					input.readOnly = editable == false ? true : false;
-					input.type = 'tel';
+					//text field Module Id
+					function markChange () {
+						this.parentNode.classList.add('changed');
+					}
+					var inputId = document.createElement('input');
+					inputId.value = (item.id == undefined ? '' : item.id);
+					inputId.readOnly = editable == false ? true : false;
+					inputId.classList.add('module-id');
+					inputId.type = 'tel';
+					inputId.onchange = markChange;
+					//text field Module Name
+					var inputName = document.createElement('input');
+					inputName.value = (item.id == undefined ? '' : item.name);
+					inputName.readOnly = editable == false ? true : false;
+					inputName.classList.add('module-name');
+					inputName.onchange = markChange;
 					//remove button
 					var button = document.createElement('input');
 					button.type = 'button'; button.value = 'x';
 					//assemble
-					cell.appendChild(input);
+					cell.appendChild(inputId);
+					cell.appendChild(inputName);
 					cell.appendChild(button);
 					table.appendChild(row);
 					$(function () {
@@ -267,6 +291,7 @@
 						curTime = parseInt(waypoint.time);
 						calcTime = curTime - last.time;
 						if(calcTime > threshold) {
+							if (start == last) continue;
 							routesCount++
 							//tripCoords.push([last.lat, last.lng]);
 							trips.appendChild(core.tripRow(start, last, tripCoords));
@@ -286,8 +311,13 @@
 					var cell_startTime = trip.insertCell(-1);
 					cell_startTime.classList.add('q-time');
 					var bTime = new Date(start.time);
-					cell_startTime.innerHTML = bTime.getDate() + '.' + (bTime.getMonth()+1) + '.' + bTime.getFullYear()
-							+ ' <b>' + bTime.getHours() + ':' + bTime.getMinutes() + '</b>';
+					cell_startTime.innerHTML = 
+							("0" + bTime.getDate()).slice(-2)
+							+ '.' + ("0" + (bTime.getMonth()) + 1).slice(-2)
+							+ '.' + bTime.getFullYear()
+							+ ' <b>' + bTime.getHours()
+							+ ':' + ("0" + bTime.getMinutes()).slice(-2)
+							+ '</b>';
 					trip.setAttribute('starttime', start.time);
 			
 					var cell_startAddress = trip.insertCell(-1);
@@ -297,7 +327,7 @@
 					var cell_stopTime = trip.insertCell(-1);
 					cell_stopTime.classList.add('q-time');
 					var eTime = new Date(stop.time);
-					cell_stopTime.textContent = eTime.getHours() + ':' + eTime.getMinutes();
+					cell_stopTime.textContent = eTime.getHours() + ':' + ("0" + eTime.getMinutes()).slice(-2);
 					trip.setAttribute('stoptime', stop.time);
 			
 					var cell_stopAddress = trip.insertCell(-1);
@@ -458,10 +488,10 @@
 							strokeColor: marker_color,
 							strokeWeight: 2,
 							scale: 5,
-							rotation: gps_msg.track - gps_msg.magv
+							rotation: gps_msg.track - gps_msg.magv + 90
 						});
 						markers[module_id].setPosition(latlong);
-						//map.setCenter(latlong);
+						map.setCenter(latlong);
 					}
 				}
 				google.maps.event.addDomListener(window, 'load', mapctl.initMap);
