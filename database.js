@@ -95,16 +95,23 @@ Proto.getModuleList = function(request) {
 		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
 	});
 	*/
-	var list = [],
-		stream = collections.modules.find().stream();
-	stream.on('error', error);
-	stream.on('data', function (doc) {
-		list.push(doc);
-	});
-	stream.on('end', function() {
-		console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
-		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
-	});
+	//ensure collection exists
+	client.collectionNames(function(err, names) {
+		if (err) error(err);
+		if (names.indexOf('modules') == -1) {
+			client.createCollection('modules', error);
+		};
+		var list = [],
+			stream = collections.modules.find().stream();
+		stream.on('error', error);
+		stream.on('data', function (doc) {
+			list.push(doc);
+		});
+		stream.on('end', function() {
+			console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
+			Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
+		});
+	}
 }
 
 Proto.query = function(request) {
