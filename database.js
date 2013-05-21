@@ -51,18 +51,20 @@ Proto.updateModuleList = function(changes) {
 		console.log('[database]'.grey, 'add', changes.add, 'remove', changes.remove);
 		if (changes.add.length > 0) {
 			for (i = 0; i < changes.add.length; i++) {
-				var module_id = changes.add[i];
-				client.createCollection(module_id, {}, function(err, collection) {
+				var module = changes.add[i];
+				client.modules.update({id: module.id},{ $set:{name: module.name}, {upsert: true});
+				client.createCollection(module.id, {}, function(err, collection) {
 					if (err) error(err);
-					collections[module_id] = collection;
+					collections[module.id] = collection;
 					collection.ensureIndex({timestamps: 1}, {expireAfterSeconds: 60 * 24 * 365 * 2}, error);
 				});
 			}
 		}
 		if (changes.remove.length > 0) {
 			for (i = 0; i < changes.remove.length; i++) {
-				var module_id = changes.remove[i];
-				client.dropCollection(module_id, function(err, result) {
+				var module = changes.remove[i];
+				client.modules.remove({id: module.id});
+				client.dropCollection(module.id, function(err, result) {
 					if (err) error(err);
 					delete collections[module_id];
 				});
@@ -81,7 +83,7 @@ Proto.getModuleList = function(request) {
 		client_id = request.socket_id;
 
 	console.info('[database]'.grey, 'request module list');
-	client.collectionNames(function(err, names) {
+	/* client.collectionNames(function(err, names) {
 		var list = [];
 		for (i = 0; i < names.length; i++) {
 			var module_id = names[i].name.replace(dbname + '.', '');
@@ -91,10 +93,25 @@ Proto.getModuleList = function(request) {
 		}
 		console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
 		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
-	});	
+	});
+	*/
+	var list = [],
+		stream = collections.modules.find().stream();
+	stream.on('error', error);
+	stream.on('data', function (doc) {
+		list.push(doc);
+	});
+	stream.on('end', function() {
+		console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
+		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
+	});
 }
 
 Proto.query = function(request) {
+	if (!Proto.ready) {
+		console.log('[database]'.grey, 'not ready yet'.red);
+		return;
+	}
 	/*** prepare query parameters ***/
 	var begin = request.begin;
 	var end = request.end;
