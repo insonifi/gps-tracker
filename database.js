@@ -111,7 +111,7 @@ Proto.getModuleList = function(request) {
 			console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
 			Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
 		});
-	}
+	});
 }
 
 Proto.query = function(request) {
