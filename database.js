@@ -52,7 +52,7 @@ Proto.updateModuleList = function(changes) {
 		if (changes.add.length > 0) {
 			for (i = 0; i < changes.add.length; i++) {
 				var module = changes.add[i];
-				client.modules.update({id: module.id},{ $set:{name: module.name}, {upsert: true});
+				client.modules.update({id: module.id},{ $set:{name: module.name}}, {upsert: true});
 				client.createCollection(module.id, {}, function(err, collection) {
 					if (err) error(err);
 					collections[module.id] = collection;
