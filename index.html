@@ -60,8 +60,8 @@
 					select.innerHTML = '';
 					for (var i = 0; i < list.length; i++){
 						var newid = document.createElement('option');
-						newid.value = list[i];
-						newid.textContent = list[i];
+						newid.value = list[i].id;
+						newid.textContent = list[i].name;
 						select.appendChild(newid);
 					}
 					core.displayList(list);
@@ -85,7 +85,7 @@
 						arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
 			
 					var module_id = document.querySelector('#modules-id').value;
-					console.info('[query]', module_id, '%s ... %s', startDate, endDate);
+					console.info('[query]', module_id, startDate, '...', endDate);
 					socket.emit('query', {module_id: module_id, start: startDate.valueOf(), end: endDate.valueOf()});
 				},
 				//render way point in corresponding table
