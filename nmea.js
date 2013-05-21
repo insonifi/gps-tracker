@@ -40,7 +40,7 @@ exports.parse = function (input) {
 		if (data[3] == 'S') nmea.lat = -nmea.lat;
 		nmea.long = ((((data[4] | 0) / 100) | 0) + (parseFloat(data[4]) % 100) * 0.0166666666667).toFixed(6);
 		if (data[5] == 'W') nmea.long = -nmea.long;
-		nmea.kph = (data[6] * 0.539957).toFixed(2);
+		nmea.kph = (data[6] * 1.8519993258722454).toFixed(2);
 		nmea.track = data[7];
 		//nmea.timestamp = new Date();
 		nmea.magv = data[9];

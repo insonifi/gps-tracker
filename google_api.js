@@ -41,5 +41,8 @@ function getAddressString(lookup) {
 		if(component.types.indexOf('street_number') != -1) address.number = component.long_name;
 		if(component.types.indexOf('locality') != -1) address.locality = component.long_name;
 	}
-	return address.street + ' ' + address.number + ', ' + address.locality;
+	//return address string replacing undefined with empty string
+	return (address.street === undefined ? '' : address.street)
+		+ (address.number === undefined ? '' : ' ' + address.number)
+		+ (address.locality === undefined ? '' : ', ' + address.locality);
 }
