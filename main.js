@@ -1,3 +1,4 @@
+#!/bin/env node
 var net = require('net');
 //var track = require('./kml_track');
 var colors = require('colors'),
@@ -7,7 +8,6 @@ var colors = require('colors'),
 	app = express(),
 	socket_session = {},
 	client_socket,
-
 	server = require('http').createServer(app),
 	io = require('socket.io').listen(server),
 	vId = null;
@@ -29,7 +29,7 @@ database.on('modulelist-server', function (response) {
 });
 /********************** HTTP server ***********************************/
 //start HTTP server
-server.listen(80);
+server.listen(process.env.OPENSHIFT_NODEJS_PORT||80);
 app.use(express.static(__dirname + '/'));
 app.use(function(req, res, next){
 	//res.send(404, 'Sorry cant find that!');

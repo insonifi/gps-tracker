@@ -29,7 +29,7 @@ Proto.addRecord = function(gps_msg) {
 	this.emit('record', true);
 }
 
-Proto.updateTracklist = function(changes) {
+Proto.updateModuleList = function(changes) {
 	if(changes) {
 		console.log('[redis]'.grey, 'add', changes.add, 'remove', changes.remove);
 		if (changes.add.length > 0) {

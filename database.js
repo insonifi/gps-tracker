@@ -1,15 +1,18 @@
 var colors = require('colors'),
-	mongodb = require('mongodb'),
-	server = new mongodb.Server('127.0.0.1', 27017, {auto_reconnect: true}),
-	dbname = 'gps',
-	db = new mongodb.Db(dbname, server, {w: 1}),
+	MongoClient = require('mongodb').MongoClient,
+	//host = process.env.OPENSHIFT_MONGODB_DB_HOST || 'localhost',
+	//port = process.env.OPENSHIFT_MONGODB_DB_PORT || 27013,
+	//server = new mongodb.Server(host, port, {auto_reconnect: true}),
+	db_uri = (process.env.OPENSHIFT_MONGODB_DB_URL || 'mongodb://127.0.0.1:27013/') + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
+	//db = new mongodb.Db,
 	collections = {},
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter;
 	Proto.ready = false
-
+	
+	console.log('[database]'.grey, 'connecting to'.grey, db_uri);
 //provide connection to Mongo
-db.open(function(err, client_instance) {
+MongoClient.connect(db_uri, function(err, client_instance) {
 	if (err) {
 		error(err);
 	} else {
@@ -99,18 +102,23 @@ Proto.getModuleList = function(request) {
 	client.collectionNames(function(err, names) {
 		if (err) error(err);
 		if (names.indexOf('modules') == -1) {
-			client.createCollection('modules', error);
+			console.info('[database]'.grey, 'no modules list found'.red);
+			client.createCollection('modules', {}, function(err, collection) {
+				console.info('[database]'.grey, 'creating modules list');
+				if (err) error(err);
+				collections['modules'] = collection;
+			});
 		};
-		var list = [],
-			stream = collections.modules.find().stream();
-		stream.on('error', error);
-		stream.on('data', function (doc) {
-			list.push(doc);
-		});
-		stream.on('end', function() {
-			console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
-			Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
-		});
+	});
+	var list = [],
+		stream = collections.modules.find(error).stream();
+	stream.on('error', error);
+	stream.on('data', function (doc) {
+		list.push(doc);
+	});
+	stream.on('end', function() {
+		console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
+		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
 	});
 }
 
