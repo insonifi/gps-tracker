@@ -39,7 +39,7 @@ app.get('/', function (req, res) {
 	console.log('[HTTP]'.grey, req.path);
   //res.sendfile(__dirname + '/index.html');
 });
-/******************** Interaction with client *************************/
+/*********************** Event pool with Socket.IO ****************************/
 io.enable('browser client minification');  // send minified client
 io.enable('browser client etag');          // apply etag caching logic based on version number
 io.enable('browser client gzip');          // gzip the file
@@ -73,6 +73,10 @@ io.sockets.on('connection', function (socket) {
 	global_socket.on('disconnect', function () {
 		delete socket_session[this.id];
 	});
+//received trackdata
+	global_socket.on('gps-message', function (message) {
+		queue.add(message);
+	});
 //query
 	global_socket.on('query', function (data) {
 		database.query({'socket_id': socket.id, 'module_id': data.module_id, 'begin': data.start, 'end': data.end});
@@ -103,7 +107,8 @@ database.on('modulelist-client', function (response) {
 });
 
 /*************************** GPS server *******************************/					
-var serverGPS = net.createServer(function(c) { //'connection' listener
+/*
+ var serverGPS = net.createServer(function(c) { //'connection' listener
 	console.log('[GPS]'.grey, 'Connection established');
 	queue.notProcessing = true;
 	c.on('end', function() {
@@ -146,7 +151,7 @@ var serverGPS = net.createServer(function(c) { //'connection' listener
 serverGPS.listen(process.env.VCAP_APP_PORT || 920, function() { //'listening' listener
   console.log('[GPS]'.grey, 'Server listening'.green);
 });
-/*
+
 function dump_kmz() {
 	var zip = require('node-zip')();
 	var fs = require('fs');

@@ -6,7 +6,6 @@
   "dependencies": {
     "express": "",
     "xmlbuilder": "",
-    "colors": "",
     "node-zip": "",
     "socket.io": "",
     "colors": "",
