@@ -8,7 +8,7 @@ var colors = require('colors'),
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter;
 	Proto.ready = false;
-	Proto.Proto.collections = {};
+	Proto.collections = {};
 	
 	console.log('[database]'.grey, 'connecting to'.grey, db_uri);
 //provide connection to Mongo
@@ -110,9 +110,12 @@ Proto.getModuleList = function(request) {
 			console.info('[database]'.grey, 'no modules list found'.red);
 			client.createCollection('modules', {}, function(err, collection) {
 				console.info('[database]'.grey, 'creating modules list');
-				if (err) error(err);
-				Proto.collections['modules'] = collection;
-				acquire_list();
+				if (err) {
+					error(err)
+				} else {
+					Proto.collections['modules'] = collection;
+					acquire_list();
+				}
 			});
 		} else {
 			acquire_list();
