@@ -1,166 +1,589 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Welcome to OpenShift</title>
-  <style>
-  html { 
-  background: black; 
-  }
-  body {
-    background: #333;
-    background: -webkit-linear-gradient(top, black, #666);
-    background: -o-linear-gradient(top, black, #666);
-    background: -moz-linear-gradient(top, black, #666);
-    background: linear-gradient(top, black, #666);
-    color: white;
-    font-family: "Helvetica Neue",Helvetica,"Liberation Sans",Arial,sans-serif;
-    width: 40em;
-    margin: 0 auto;
-    padding: 3em;
-  }
-  a {
-    color: white;
-  }
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript"
+		  src="https://maps.googleapis.com/maps/api/js?sensor=false">
+		</script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="/md5.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
+		<link type="text/css" href="./jquery-simple-datetimepicker/jquery.simple-dtpicker.css" rel="stylesheet" />
+		<link type="text/css" href="./strike4/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
+		<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
+		<script>
+			var threshold = 5 * 60 * 1000 //5min  -- threshold to distinguish trips
+			var socket = io.connect('http://' + document.domain);
+			(function () {
+				socket.on('handshake', function (data) {
+					console.log('[connected]', data.welcome);
+					$('#info').info('update', data.welcome, 'info');
+					core.getList();
+				});
+				//query finished
+				socket.on('count', function (count) {
+					console.log('[query]', 'found ' + count);
+					$('#info').info('update', 'found ' + count, 'info');
+					setTimeout(function () {
+						$('#tabs').tabs('refresh');
+					}, 500);
+				});
+				//display server time
+				socket.on('clock', function (time) {
+					console.info('[clock]', time);
+					$('#clock').text((new Date(time)).toLocaleTimeString());
+				});
+				//query
+				socket.on('query-waypoint', function (data) {
+					console.info('query', data);
+					if(undefined != data) 
+						core.showWaypoint(data, 'query-table');
+				});
+				//got new live waypoint
+				socket.on('update-waypoint', function (data) {
+					console.info('[waypoint]',data);
+					if(undefined != data) {
+						//update marker on map
+						mapctl.updateMarker(data);
+						//show in info box
+						core.newWaypoint(data);
+						//show new way point in table
+						core.showWaypoint(data, 'updates-table');
+						$('#tabs').tabs('refresh');
+					}
+				});
+				//got tracked modules list
+				socket.on('modulelist', function (list) {
+					console.info('[list]', list);
+					var select = document.getElementById('modules-id');
+					select.innerHTML = '';
+					for (var i = 0; i < list.length; i++){
+						var newid = document.createElement('option');
+						newid.value = list[i].id;
+						newid.textContent = list[i].name;
+						select.appendChild(newid);
+					}
+					core.displayList(list);
+				});
+			})();
+			core = {
+				query: function () {
+					core.flushTable('query-table');
+					core.flushTable('trips-table');
+					var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
+					var timeoffset = (new Date).getTimezoneOffset() / 60
+					//parse start date
+					var strStartDate = document.querySelector('#start-date').value;
+					var arStartDate = re.exec(strStartDate);
+					var startDate = new Date(Date.UTC(arStartDate[5], --arStartDate[4],
+						arStartDate[3],  timeoffset + parseInt(arStartDate[1]), arStartDate[2]));
+					//parse end date
+					var strEndDate = document.querySelector('#end-date').value;
+					var arEndDate = re.exec(strEndDate);
+					var endDate = new Date(Date.UTC(arEndDate[5], --arEndDate[4],
+						arEndDate[3], timeoffset + parseInt(arEndDate[1]), arEndDate[2]));
+			
+					var module_id = document.querySelector('#modules-id').value;
+					console.info('[query]', module_id, startDate, '...', endDate);
+					socket.emit('query', {module_id: module_id, start: startDate.valueOf(), end: endDate.valueOf()});
+				},
+				//render way point in corresponding table
+				showWaypoint: function (message, tableName) {
+					var table = document.getElementById(tableName);
+					var row = document.createElement('tr');
+					row.classList.add('q-row');
+					row.id = message.timestamp;
+					for (property in message) {
+						row.setAttribute(property, message[property]);
+					}
+					row.onmouseover = function () {
+						mapctl.showActiveMarker(message.lat, message.long);
+					}
+					row.onmouseout = function () {
+						mapctl.hideActiveMarker();
+					}
+			
+					var time = row.insertCell(-1);
+					var g_time = new Date(parseInt(message.timestamp));
+					if(tableName == 'updates-table') {
+						if(table.childNodes.length > 10) { //limit to last 10 updates
+							table.removeChild(table.firstChild);
+						}
+						time.textContent = g_time.getHours() + ':' + ("0" + g_time.getMinutes()).slice(-2);
+					} else {
+						time.innerHTML = 
+							("0" + g_time.getDate()).slice(-2)
+							+ '.'
+							+ ("0" + (g_time.getMonth() + 1)).slice(-2)
+							+ '.' + g_time.getFullYear()
+							+ ' <b>'
+							+ g_time.getHours()
+							+ ':'
+							+ ("0" + g_time.getMinutes()).slice(-2)
+							+ '</b>';
+					}
+					time.classList.add('q-time');
+			
+					var address = row.insertCell(-1);
+					address.textContent = message.address;
+					address.classList.add('q-address');
+			
+					var speed = row.insertCell(-1);
+					speed.textContent = message.kph + ' km/h';
+					speed.classList.add('q-speed');
+			
+					table.appendChild(row);
+				},
+				newWaypoint: function (data) {
+					var message = document.createElement('div');
+					message.classList.add('q-row');
+					//time
+					var time = document.createElement('span');
+					var g_time = new Date(data.timestamp);
+					time.textContent = g_time.getHours() + ':' + ("0" + g_time.getMinutes()).slice(-2);
+					time.classList.add('q-time-now');
+					message.appendChild(time);
+					//speed
+					var kphArr = data.kph.split('.');
+					var speed = document.createElement('span');
+					speed.classList.add('q-speed-now');
+					var integer = document.createElement('span');
+					integer.style.fontSize = '1.2em';
+					integer.textContent = kphArr[0];
+					var fraction = document.createElement('span');
+					fraction.style.fontSize = '0.6em';
+					fraction.textContent = kphArr[1];
+					speed.appendChild(integer);
+					speed.appendChild(fraction);
+					message.appendChild(speed);
+					//address
+					var address = document.createElement('span');
+					address.textContent = data.address;
+					address.classList.add('q-address-now');
+					message.appendChild(address);
+					//display message in info box
+					$('#info').info('update', message.outerHTML, 'update');
+				},
+				flushTable: function (tableName) {
+					var table = document.getElementById(tableName);
+					table.innerHTML = '';
+					/*while (table.lastChild) {
+						table.removeChild(table.lastChild);
+					}*/
+				},
+				updateList: function () {
+					var table = document.getElementById('modulelist-table');
+					var changes = {
+						add: [],
+						remove: [],
+						hash: ''
+					}
+					var id;
+					for(var i = 0; i < table.childNodes.length; i++) {
+						node = table.childNodes[i];
+						id = node.querySelector('input.module-id').value;
+						name = node.querySelector('input.module-name').value;
+						if ('' == id||'' == name) continue;
+						if('none' == node.style.display) {
+							changes.remove.push({id: id});
+						} else {
+							changes.add.push({id: id, name: name});
+						}
+					}
+					console.info('[updateList] update', 'add:',changes.add, 'remove', changes.remove);
+					$('#info').info('update', 'Update modules list');
+					changes.hash = md5(window.prompt('Password'));
+					socket.emit('update-modulelist', changes);
+					core.getList();
+				},
+				getList: function () {
+					socket.emit('get-modulelist');
+				},
+				displayList: function (list) {
+					core.flushTable('modulelist-table');
+					for (var i = 0; i < list.length; i++) {
+						core.addModuleId(list[i], editable = false);
+					}
+				},
+				addModuleId: function (item, editable) {
+					var table = document.getElementById('modulelist-table');
+					var row = document.createElement('tr');
+					var cell = row.insertCell(-1);
+					//text field Module Id
+					function markChange () {
+						this.parentNode.classList.add('changed');
+					}
+					var inputId = document.createElement('input');
+					inputId.value = (item.id == undefined ? '' : item.id);
+					inputId.readOnly = editable == false ? true : false;
+					inputId.classList.add('module-id');
+					inputId.type = 'tel';
+					inputId.onchange = markChange;
+					//text field Module Name
+					var inputName = document.createElement('input');
+					inputName.value = (item.id == undefined ? '' : item.name);
+					inputName.readOnly = editable == false ? true : false;
+					inputName.classList.add('module-name');
+					inputName.onchange = markChange;
+					//remove button
+					var button = document.createElement('input');
+					button.type = 'button'; button.value = 'x';
+					//assemble
+					cell.appendChild(inputId);
+					cell.appendChild(inputName);
+					cell.appendChild(button);
+					table.appendChild(row);
+					$(function () {
+						$('td > input[type=\'button\']').button().click(core.removeRow);
+					});
+				},
+				removeRow: function () {
+					var row = this.parentNode.parentNode;
+					row.style.display = 'none';
+				},
+				toggleQuery: function () {
+					var query = document.getElementById('query-table');
+					var trips = document.getElementById('trips-table');
+					//toggle
+					if (query.style.display == 'none') {
+						query.style.display = 'table';
+						trips.style.display = 'none';
+					} else {
+						query.style.display = 'none';
+						trips.style.display = 'table';
+					}
+			
+					core.detectRoutes();
 
-  h1 {
-    text-transform: capitalize;
-    -moz-text-shadow: -1px -1px 0 black;
-    -webkit-text-shadow: 2px 2px 2px black;
-    text-shadow: -1px -1px 0 black;
-    box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.5);
-    background: #CC0000;
-    width: 22.5em;
-    margin: 1em -2em;
-    padding: .3em 0 .3em 1.5em;
-    position: relative;
-  }
-  h1:before {
-    content: '';
-    width: 0;
-    height: 0;
-    border: .5em solid #91010B;
-    border-left-color: transparent;
-    border-bottom-color: transparent;
-    position: absolute;
-    bottom: -1em;
-    left: 0;
-    z-index: -1000;
-  }
-  h1:after {
-    content: '';
-    width: 0;
-    height: 0;
-    border: .5em solid #91010B;
-    border-right-color: transparent;
-    border-bottom-color: transparent;
-    position: absolute;
-    bottom: -1em;
-    right: 0;
-    z-index: -1000;
-  }
-  h2 { 
-    margin: 2em 0 .5em;
-    border-bottom: 1px solid #999;
-  }
-
-  pre {
-    background: black;
-    padding: 1em 0 0;
-    -webkit-border-radius: 1em;
-    -moz-border-radius: 1em;
-    border-radius: 1em;
-    color: #9cf;
-  }
-
-  ul { 
-    margin: 0; 
-    padding: 0;
-  }
-  li {
-    list-style-type: none;
-    padding: .5em 0;
-  }
-
-  .brand {
-    display: block;
-    text-decoration: none;
-  }
-  .brand .brand-image {
-    float: left;
-    border: none;
-  }
-  .brand .brand-text {
-    float: left;
-    font-size: 24px;
-    line-height: 24px;
-    padding: 4px 0;
-    color: white;
-    text-transform: uppercase;
-  }
-  .brand:hover,
-  .brand:active {
-    text-decoration: underline;
-  }
-
-  .brand:before,
-  .brand:after {
-    content: ' ';
-    display: table;
-  }
-  .brand:after {
-    clear: both;
-  }
-  .env {
-    font-size: 16px;
-    line-height: 16px;
-    color: #298A08;
-  }
-  </style>
-</head>
-<body>
-  <a href="http://openshift.com" class="brand">
-    <img class="brand-image"
-      alt="OpenShift logo"
-      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAgCAYAAABU1PscAAAAAXNSR0IArs4c6QAAAAZiS0dEAAAAAAAA+UO7fwAAAAlwSFlzAAARHgAAER4B27UUrQAABUhJREFUWMPFWFlsVGUU/s5/70zbaSltA7RQpJ2lC9CFkQkWIgSJxkAhRA0JCYFq4hPG6JsoGKNCtPigxqhvGlPAuGIaE4igNaElbIW2yNL2tkOtTYGWCqWF2e79fCh7p1Bmpnge/3vuOef7z/nPJiTxMHS6pMRuu6YqFNTTAJYSyAU4GZB0AH2AGCANAfc5Qrba6T3HrmECScYLwCioSIcV2AjidQDZ45Q/LJRaWrLV03X89P8GwHB5XwG4DcDkGPWEBKimNrzN094efGQAzjm9GWHFr4R4LiHKgFaSL3r8zYcmHEBbkW+KFo7UEyhKsNeHlMgyV8eJo4kQpqId9ub6HCoc+XWcxl8lcBTATwDax8GfZtHa054/f/bNg8ZcnyOhHjBc834E8MJ9/vML8aYZQX1hd1PP3WFXkhMRfYkIlpOoGomc0WRRTnch+XAQWG2KTNJNLbuy68C/cQMwXOWrAKkdgz8A8kMdg9X5fn/gQcI7POXLaMk3AGbe/P8SbF0D1KcGRGXpIJJpIQkWBHhnsf/Ie3GF0DmnMxmQT8bg7RellXr8ze+Ox3gAcBvNf+iUUhH5FODLSvScAerDGpiVxTAyGUYKzICA34nCwbhDyHB7N4L8PAofhVzh9jfvjffR/ZZTnupIsR8G0C9EjW7Tfnii/dBgrPL0u83kmjHy33Z3Z/zG97uKi7xpWA8GHZpE1mcZRne8MvXblfbxqQAWR+Fp+mdW5hZPjAqu5JVlhrTwOgrXi2ABbjjchF4FYGvi0qhprgagjYod4OeldXWRWBUEtdBjEH4mwIJ7vF2V4Dqgot0+NEFdPAqmdZ5tAXA8Slx6LrpKsxMHQJge5ft1v0oe2OOu+PZ39+LCOFqImqiXo8JzAeBkXlnmnoKK9LgACJl2R9gELsHW1saUwKCpnbIoa8UMTokVgGXJmSjHkfNWUlWDy9d6USVdyoiEF8b1iElxQKHuPG1D/bCtVEBhCiykMQQFgCK2mN2sSx+tkdcbhGq7wKSkK9RnmsCG2xVSLsflAR1S6eloWhawtF8yGJGskSJDBdQR8pIjZMXcfFmm1gOg2lRaSRdT1AD1PBPQbCAyxcRMifCpc41HEtILNbh9s8SSvYTUmBp2LDGOdCOB1OD0XbeByWliwY5bugc9nU2T4wqhCx7PNAV9bSGwARp3TzVaP0j09GQUzJubLUgefY3SEHMh63MVr4FIlYL+7C1AlCwAmxM+/plYy6hhgN2xp1HBawAr72krnH3uoicTaXyHx7uIwKZoT0QhUhszAAI7x7ivL0a60/jp77yyTFrWt6N6rxE99c7OkxdiBhC2y/cAorXHpama/aNG8dkOO32b6p3zTzXmeysfPu4LkkKafA3IrGjfCfPtuGfiPlfx+xBsuWtwpa3zIuy2YaoZ5o0eSQc5TVnb53aeeAuk9eBtRvkqUH0MoTsqA7nL429eFzeA3lyfQ08eaiNgCrjTYNozQ1S+WyUfQCosTLqZ+oiDUNwhggPujpZTuCMXGwUV6cJgKYnNIJffR3df2NLLZ5871puQrUR//pzpU7rOnAfJP53eDELrsoPpk4RIGRn5xqIBAAdBOCAoBjBjPJsJUdZSt9HSOGFrld5cn2M4KbwfkIUJzqYhQlYWdJ7YN2FrFQCY3nPsmk61AuSuRNYyUdaiRBk/7tViR37Zcir1JYC8WNshgjWWPfhq0dmzVx/5bhQAWnLKU1Md8gZHOsjxAgmD2GEKq4s6m1sxASQPu16HiBh53goqPg9ac0TEcwNQEOBlQAZEcMgC94dDZt2c7r8GMIH0H43ZRDC51RVCAAAAAElFTkSuQmCC">
-    <div class="brand-text"><strong>Open</strong>Shift</div>
-  </a>
-  <h1>
-    Welcome to OpenShift - &lt;your custom Node.js version here&gt;
-  </h1>
-  <div>
-    <pre>
-      <a href="/env" class="env">Click here to view your Node.js process version and env.</a>
-    </pre>
-  </div>
-  <p>
-    Place your application here
-  </p>
-  <p>
-    In order to commit to your new project, go to your projects git repo (created with the rhc app create command).  Make your changes, then run:
-  </p>
-  <pre>
-    git commit -a -m 'Some commit message'
-    git push
-  </pre>
-  <p>
-    Then reload this page.
-  </p>
-  
-  <h2>
-    What's next?
-  </h2>
-  <ul>
-    <li>
-      Why not visit us at <a href="http://openshift.redhat.com">http://openshift.redhat.com</a>, or
-    </li>
-    <li>
-      You could get help in the <a href="http://www.redhat.com/openshift">OpenShift forums</a>, or
-    </li>
-    <li>
-      You're welcome to come chat with us in our IRC channel at #openshift on freenode.net
-    </li>
-  </ul>
-</body>
+				},
+				detectRoutes: function () {
+					var routesCount = 0;
+					var query = document.getElementById('query-table');
+			
+					var trips = document.getElementById('trips-table');
+					var tripCoords = [];
+			
+					var waypointHtml = query.firstChild;
+					//do we have any waypoint?
+					if (waypointHtml == undefined) return;
+					var waypoint =  {
+							time: parseInt(waypointHtml.getAttribute('timestamp')),
+							address: waypointHtml.getAttribute('address'),
+							lat: waypointHtml.getAttribute('lat'),
+							lng: waypointHtml.getAttribute('long')
+						};
+					var start = waypoint,
+						last = start;
+					var calcTime,
+						lastTime;
+			
+					while (waypointHtml) {
+						var waypoint =  {
+							time: parseInt(waypointHtml.getAttribute('timestamp')),
+							address: waypointHtml.getAttribute('address'),
+							lat: waypointHtml.getAttribute('lat'),
+							lng: waypointHtml.getAttribute('long')
+						};
+						//tripCoords.push([waypoint.lat, waypoint.lng]);
+				
+						//calculate
+						curTime = parseInt(waypoint.time);
+						calcTime = curTime - last.time;
+						if(calcTime > threshold) {
+							if (start == last) continue;
+							routesCount++
+							//tripCoords.push([last.lat, last.lng]);
+							trips.appendChild(core.tripRow(start, last, tripCoords));
+							//tripCoords = [];
+							start = waypoint;
+						}
+						last = waypoint
+						//next iteration
+						waypointHtml = waypointHtml.nextSibling;
+					}
+					console.info('[detectRoutes]', 'Detected', routesCount, 'routes');
+					$('#info').info('update', 'Detected ' + routesCount + ' routes');
+				},
+				tripRow: function (start, stop, coords) {
+					var trip = document.createElement('tr');
+					trip.classList.add('q-row');
+					var cell_startTime = trip.insertCell(-1);
+					cell_startTime.classList.add('q-time');
+					var bTime = new Date(start.time);
+					cell_startTime.innerHTML = 
+							("0" + bTime.getDate()).slice(-2)
+							+ '.' + ("0" + (bTime.getMonth()) + 1).slice(-2)
+							+ '.' + bTime.getFullYear()
+							+ ' <b>' + bTime.getHours()
+							+ ':' + ("0" + bTime.getMinutes()).slice(-2)
+							+ '</b>';
+					trip.setAttribute('starttime', start.time);
+			
+					var cell_startAddress = trip.insertCell(-1);
+					cell_startAddress.textContent = start.address;
+					cell_startAddress.classList.add('q-address');
+			
+					var cell_stopTime = trip.insertCell(-1);
+					cell_stopTime.classList.add('q-time');
+					var eTime = new Date(stop.time);
+					cell_stopTime.textContent = eTime.getHours() + ':' + ("0" + eTime.getMinutes()).slice(-2);
+					trip.setAttribute('stoptime', stop.time);
+			
+					var cell_stopAddress = trip.insertCell(-1);
+					cell_stopAddress.classList.add('q-address');
+					cell_stopAddress.textContent= stop.address;
+			
+					//trip.setAttribute('coordinates', coords.join('_'));
+			
+					trip.onclick = function() {
+						mapctl.showTripHistory(start.time, stop.time);
+					}
+					return trip;
+				},
+				printReport: function () {
+					var trips = document.getElementById('trips-table');
+					var query = document.getElementById('query-table');
+					var report;
+					if (query.style.display == 'none') {
+						report = trips;
+					} else {
+						report = query;
+					}
+					//var printFrame = document.createElement('iframe');
+					var printFrame = document.getElementById('print-frame');
+					with (printFrame) {
+						contentDocument.write('<link type="text/css" href="./strike4/print.css" rel="stylesheet" />');
+						contentDocument.write(report.outerHTML);
+						contentWindow.print();
+					}
+					$('#info').info('update', 'Printing');
+				}
+			};
+			(function( $ ) {
+				var methods = {
+					init: function( options ) {
+						var $this = this;
+						return this.each(function () {
+							$this.settings = $.extend( {
+								'timeout': 10
+							}, options);
+							$this.attr('timeout', $this.settings.timeout * 1000);
+							$this.addClass('info');
+						})
+					},
+					show: function() {},
+					hide: function() {},
+					update: function( message, type, time ) {
+						var $this = this;
+						return this.each(function () {
+							if($this.hasClass('ui-state-error')) {
+								$this.removeClass('ui-state-error');
+							}
+							if(type == 'update') {
+								window.clearTimeout(window.infoTimer);
+								window.infoTimer = setTimeout(function () {
+									$this.addClass('ui-state-error');
+								}, $this.attr('timeout'))
+							}
+							$this.effect('highlight');
+							$this.html(message);
+						});
+					}
+				}
+				$.fn.info = function( method ) {		
+					if ( methods[ method ] ) {
+						return methods[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
+					} else if ( typeof method === 'object' || ! method ) {
+						return methods.init.apply( this, arguments );
+					} else {
+						$.error( 'Method ' +  method + ' does not exist on jQuery.info' );
+					}
+				}
+			}) ( jQuery );
+		</script>
+		<!-- Google Maps //-->
+		<script>
+			(function () {
+				var mapCenter = new google.maps.LatLng(56.9496,24.1040);//Riga
+				var mapProp = {
+					center: mapCenter,
+					zoom: 12,
+					mapTypeId: google.maps.MapTypeId.ROADMAP
+				};
+				//var symbol = 'M -0.3,0 -0.3,5 M 0.3,0 0.3,5 M 0.3,5 2,1 M -0.3,5 -2,1 M 0.3,0 2,1 M -0.3,0 -2,1';
+				//var symbol = 'M -0.3,-2 -0.3,2 M 0.3,-2 0.3,2 M 0.3,2 2,-1.5 M -0.3,2 -2,-1.5 M 0.3,-2 2,-1.5 M -0.3,-2 -2,-1.5';
+				var symbol = google.maps.SymbolPath.FORWARD_CLOSED_ARROW;
+				var marker_color = '#992200';
+				var path_color = '#ef5611';
+				var trails = {};
+				var map;
+				var hpath = new google.maps.Polyline({
+					strokeColor: marker_color,
+					strokeWeight: 3,
+					strokeOpacity: 0.8
+				});
+				var markers = {};
+				var active = new google.maps.Marker();
+				
+				mapctl = {
+					initMap: function () {
+						map = new google.maps.Map(document.getElementById("map"),mapProp);
+						active.setMap(map);
+						hpath.setMap(map)
+					},
+					updateMapSize: function () {
+						var mapElement = document.getElementById('map');
+						var divMap = mapElement.parentNode;
+						divMap.style.height = window.innerHeight - divMap.offsetTop;
+					},
+					showActiveMarker: function (lat, lng) {
+						var latlong = new google.maps.LatLng(lat, lng);
+						active.setPosition(latlong);
+						active.setVisible(true);
+					},
+					hideActiveMarker: function () {
+						active.setVisible(false);
+					},
+					showTripHistory: function (start, stop) {
+						var path = [];
+						var waypoint = document.getElementById(start);
+				
+						while(waypoint.getAttribute('timestamp') <= stop) {
+							path.push(new google.maps.LatLng(waypoint.getAttribute('lat'), waypoint.getAttribute('long')))
+							waypoint = waypoint.nextSibling;
+						}
+						hpath.setPath(path);
+						hpath.setVisible(true);
+					},
+					hideTripHistory: function () {
+						hpath.setVisible(false);
+					},
+					updateMarker: function (gps_msg) {
+						var latlong = new google.maps.LatLng(gps_msg.lat, gps_msg.long);
+						//update trail
+						var module_id = gps_msg.module_id;
+						if(!trails[module_id]) {
+							trails[module_id] = {};
+							trails[module_id].trip = [];
+							trails[module_id].trail = new google.maps.Polyline({
+								strokeColor: path_color,
+								strokeWeight: 3,
+								strokeOpacity: 0.8
+							});
+							trails[module_id].trail.setMap(map);
+						}
+						trails[module_id].trip.push(latlong)
+						if (trails[module_id].trip.length > 10) {
+							trails[module_id].trip.shift();
+						}
+						trails[module_id].trail.setPath(trails[module_id].trip);
+						//update marker
+						if(!markers[module_id]) {
+							markers[module_id] = new google.maps.Marker();
+							markers[module_id].setMap(map);
+						}
+						markers[module_id].setIcon({
+							path: symbol,
+							strokeColor: marker_color,
+							strokeWeight: 2,
+							scale: 5,
+							rotation: gps_msg.track - gps_msg.magv + 90
+						});
+						markers[module_id].setPosition(latlong);
+						map.setCenter(latlong);
+					}
+				}
+				google.maps.event.addDomListener(window, 'load', mapctl.initMap);
+			})();
+		</script>
+		<!-- Google Maps //-->
+	</head>
+	<body>
+		<table class='q-table'>
+			<tr>
+				<td><div id='info'></div></td>
+				<td style='width: 6em'><div id='clock'></div></td>
+			</tr>
+		</table>
+		<div id='tabs'>
+			<ul>
+				<li><a href='#tabs-n'>Map</a></li>
+				<li><a href='#tabs-updates'>History</a></li>
+				<li><a href='#tabs-query'>Query</a></li>
+				<li><a href='#tabs-settings'>Settings</a></li>
+			</ul>
+			<div id='tabs-query'>
+				<input type="text" id="start-date"></input>
+				<input type="text" id="end-date"></input>
+				<select id="modules-id"></select>
+				<input type='button' id='query' value='Query'></input>
+				<span id='radio'>
+					<input type="radio" id="radio1" name="radio" checked="checked" /><label for="radio1">Waypoints</label>
+					<input type="radio" id="radio2" name="radio" /><label for="radio2">Trips</label>
+				</span>
+				<input type='button' id='print-report' value='Print'></input>
+				<div class='q-view'>
+					<table id='query-table' class='q-table' ></table>
+					<table id='trips-table' class='q-table'></table>
+				</div>
+			</div>
+			<div id='tabs-updates'>
+				<table id='updates-table' class='u-table'></table>
+			</div>
+			<div id='tabs-settings'>
+				<table id='modulelist-table'></table>
+				<input type='button' id='update-list' value='Update'>
+				<input type='button' id='append-list' value='+'>
+			</div>
+		</div>
+		<div id='map'></div>
+		<iframe id='print-frame'></iframe>
+		<script type="text/javascript">
+			$(function(){
+				var date = new Date;
+				var yesterDate = date.getFullYear() + '-'
+					+ (date.getMonth()+1) + '-' + (date.getDate()-1)
+					+ ' ' + date.getHours() + ':' + date.getMinutes();
+				//console.log(currentDate)
+				$('#start-date').appendDtpicker({
+					dateFormat: 'h:mm D.M.YYYY',
+					current: yesterDate
+				})
+				$('#end-date').appendDtpicker({
+					dateFormat: 'h:mm D.M.YYYY'
+				})
+			});
+			$(function () {
+				$('#query').button().click(core.query);
+			});
+			$(function () {
+				$('#radio').buttonset().change(core.toggleQuery);
+			});
+			$(function () {
+				$('#update-list').button().click(core.updateList);
+			});
+			$(function () {
+				$('#append-list').button().click(core.addModuleId);
+			});
+			$(function () {
+				$('#print-report').button().click(core.printReport);
+			});
+			$(function() {
+				$('#tabs').tabs({
+					activate: function(event, ui) {
+						if('#tabs-settings' == ui.newTab.context.hash) {
+							//getList();
+						}
+						if('#tabs-query' != ui.newTab.context.hash) {
+							mapctl.hideTripHistory();
+						}
+					}
+				});
+			});
+			$(function () {
+				$('#info').info({'timeout': 300});
+			});
+		</script>
+	</body>
 </html>
