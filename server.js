@@ -22,13 +22,13 @@ var SampleApp = function() {
      */
     self.setupVariables = function() {
         //  Set the environment variables we need.
-        self.ipaddress = process.env.OPENSHIFT_INTERNAL_IP;
-        self.port      = process.env.OPENSHIFT_INTERNAL_PORT || 8080;
+        self.ipaddress = process.env.OPENSHIFT_INTERNAL_IP || process.env.OPENSHIFT_NODEJS_IP;
+        self.port      = process.env.OPENSHIFT_INTERNAL_PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
         if (typeof self.ipaddress === "undefined") {
             //  Log errors on OpenShift but continue w/ 127.0.0.1 - this
             //  allows us to run/test the app locally.
-            console.warn('No OPENSHIFT_INTERNAL_IP var, using 127.0.0.1');
+            console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');
             self.ipaddress = "127.0.0.1";
         };
     };
@@ -95,7 +95,7 @@ var SampleApp = function() {
     self.createRoutes = function() {
         self.routes = { };
 
-        // Routes for /health, /asciimo and /
+        // Routes for /health, /asciimo, /env and /
         self.routes['/health'] = function(req, res) {
             res.send('1');
         };
@@ -105,8 +105,22 @@ var SampleApp = function() {
             res.send("<html><body><img src='" + link + "'></body></html>");
         };
 
+        self.routes['/env'] = function(req, res) {
+            var content = 'Version: ' + process.version + '\n<br/>\n' +
+                          'Env: {<br/>\n<pre>';
+            //  Add env entries.
+            for (var k in process.env) {
+               content += '   ' + k + ': ' + process.env[k] + '\n';
+            }
+            content += '}\n</pre><br/>\n'
+            res.send(content);
+            res.send('<html>\n' +
+                     '  <head><title>Node.js Process Env</title></head>\n' +
+                     '  <body>\n<br/>\n' + content + '</body>\n</html>');
+        };
+
         self.routes['/'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
+            res.set('Content-Type', 'text/html');
             res.send(self.cache_get('index.html') );
         };
     };
