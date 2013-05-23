@@ -86,18 +86,23 @@ Proto.getModuleList = function(request) {
 		client_id = request.socket_id;
 
 	console.info('[database]'.grey, 'request module list');
-	/* client.collectionNames(function(err, names) {
-		var list = [];
-		for (i = 0; i < names.length; i++) {
-			var module_id = names[i].name.replace(dbname + '.', '');
-			if (module_id == 'system.indexes') continue;
-			list.push(module_id);
-			collections[module_id] = client.collection(module_id);
+	
+	function acquire_list() {
+		if (!collections.modules) {
+			return console.info('[database]'.grey, 'modules list wasn\'t created'.red);
 		}
-		console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
-		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
-	});
-	*/
+		var list = [],
+			stream = collections.modules.find(error).stream();
+		stream.on('error', error);
+		stream.on('data', function (doc) {
+			list.push(doc);
+		});
+		stream.on('end', function() {
+			console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
+			Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
+		});
+	}
+
 	//ensure collection exists
 	client.collectionNames(function(err, names) {
 		if (err) error(err);
@@ -107,21 +112,11 @@ Proto.getModuleList = function(request) {
 				console.info('[database]'.grey, 'creating modules list');
 				if (err) error(err);
 				collections['modules'] = collection;
+				acquire_list();
 			});
-		};
-	});
-	if (!collections.modules) {
-		return console.info('[database]'.grey, 'modules list wasn\'t created'.red);
-	}
-	var list = [],
-		stream = collections.modules.find(error).stream();
-	stream.on('error', error);
-	stream.on('data', function (doc) {
-		list.push(doc);
-	});
-	stream.on('end', function() {
-		console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
-		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
+		} else {
+			acquire_list();
+		}
 	});
 }
 
