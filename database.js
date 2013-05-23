@@ -92,7 +92,7 @@ Proto.getModuleList = function(request) {
 			return console.info('[database]'.grey, 'modules list wasn\'t created'.red);
 		}
 		var list = [],
-			stream = Proto.collections.modules.find(error).stream();
+			stream = Proto.collections.modules.find().stream();
 		stream.on('error', error);
 		stream.on('data', function (doc) {
 			list.push(doc);
