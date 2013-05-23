@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "gps-tracker",
   "description": "Track GPS coordinates (NMEA) fed by mobile GPS modules",
   "version": "0.0.1",
@@ -14,38 +13,5 @@
     "colors": "",
     "mongodb": ""
   },
-=======
-  "name": "OpenShift-Sample-App",
-  "version": "1.0.0",
-  "description": "OpenShift Sample Application",
-  "keywords": [
-    "OpenShift",
-    "Node.js",
-    "application",
-    "openshift"
-  ],
-  "author": {
-    "name": "OpenShift",
-    "email": "ramr@example.org",
-    "url":  "http://www.openshift.com/"
-  },
-  "homepage": "http://www.openshift.com/",
-  "repository": {
-    "type": "git",
-    "url": "https://gitub.com/openshift/origin-server"
-  },
-
-  "engines": {
-    "node": ">= 0.6.0",
-    "npm": ">= 1.0.0"
-  },
-
-  "dependencies": {
-  },
-  "devDependencies": {},
-  "bundleDependencies": [],
-
-  "private": true,
->>>>>>> 20d6cd24a88b222d8e1357ba50e6d90348e92cfd
   "main": "server.js"
 }
