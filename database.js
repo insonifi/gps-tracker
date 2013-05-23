@@ -113,7 +113,7 @@ Proto.getModuleList = function(request) {
 				if (err) {
 					error(err)
 				} else {
-					Proto.collections['modules'] = client.getCollection('modules');
+					Proto.collections['modules'] = client.collection('modules');
 					acquire_list();
 				}
 			});
