@@ -110,6 +110,9 @@ Proto.getModuleList = function(request) {
 			});
 		};
 	});
+	if (!collections.modules) {
+		return console.info('[database]'.grey, 'modules list wasn\'t created'.red);
+	}
 	var list = [],
 		stream = collections.modules.find(error).stream();
 	stream.on('error', error);
