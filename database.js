@@ -5,10 +5,10 @@ var colors = require('colors'),
 	//server = new mongodb.Server(host, port, {auto_reconnect: true}),
 	db_uri = (process.env.OPENSHIFT_MONGODB_DB_URL || 'mongodb://127.0.0.1:27013/') + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
 	//db = new mongodb.Db,
-	collections = {},
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter;
-	Proto.ready = false
+	Proto.ready = false;
+	Proto.Proto.collections = {};
 	
 	console.log('[database]'.grey, 'connecting to'.grey, db_uri);
 //provide connection to Mongo
@@ -38,7 +38,7 @@ Proto.addRecord = function(gps_msg) {
 	}
 	var client = Proto.client,
 		module_id = gps_msg.module_id,
-		collection = collections[module_id];
+		collection = Proto.collections[module_id];
 	//insert new waypoint
 	collection.insert(gps_msg, {safe: true}, error);
 	Proto.emit('record', true);
@@ -58,7 +58,7 @@ Proto.updateModuleList = function(changes) {
 				client.modules.update({id: module.id},{ $set:{name: module.name}}, {upsert: true});
 				client.createCollection(module.id, {}, function(err, collection) {
 					if (err) error(err);
-					collections[module.id] = collection;
+					Proto.collections[module.id] = collection;
 					collection.ensureIndex({timestamps: 1}, {expireAfterSeconds: 60 * 24 * 365 * 2}, error);
 				});
 			}
@@ -69,7 +69,7 @@ Proto.updateModuleList = function(changes) {
 				client.modules.remove({id: module.id});
 				client.dropCollection(module.id, function(err, result) {
 					if (err) error(err);
-					delete collections[module_id];
+					delete Proto.collections[module_id];
 				});
 			}
 		}
@@ -88,11 +88,11 @@ Proto.getModuleList = function(request) {
 	console.info('[database]'.grey, 'request module list');
 	
 	function acquire_list() {
-		if (!collections.modules) {
+		if (!Proto.collections.modules) {
 			return console.info('[database]'.grey, 'modules list wasn\'t created'.red);
 		}
 		var list = [],
-			stream = collections.modules.find(error).stream();
+			stream = Proto.collections.modules.find(error).stream();
 		stream.on('error', error);
 		stream.on('data', function (doc) {
 			list.push(doc);
@@ -111,7 +111,7 @@ Proto.getModuleList = function(request) {
 			client.createCollection('modules', {}, function(err, collection) {
 				console.info('[database]'.grey, 'creating modules list');
 				if (err) error(err);
-				collections['modules'] = collection;
+				Proto.collections['modules'] = collection;
 				acquire_list();
 			});
 		} else {
@@ -132,7 +132,7 @@ Proto.query = function(request) {
 	var client_id = request.socket_id;
 	console.log('[database]'.grey, 'Query', module_id, begin, '..', end);
 	/*** execute query ***/
-	collection = collections[module_id]
+	collection = Proto.collections[module_id]
 	var stream = collection.find({timestamp: {$gt: begin, $lt: end}}, {sort: ['timestamp', 'ascending']}
 	).stream()
 	var count = 0;
