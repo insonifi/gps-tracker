@@ -1,6 +1,6 @@
 {
   "name": "gps-tracker",
-  "version": "0.1",
+  "version": "0.0.1",
   "description": "Track GPS coordinates (NMEA) fed by mobile GPS modules",
   "engines": {
     "node": ">= 0.6.0",
