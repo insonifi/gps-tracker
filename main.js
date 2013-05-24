@@ -29,7 +29,6 @@ database.on('modulelist-server', function (response) {
 });
 /********************** HTTP server ***********************************/
 //start HTTP server
-server.listen(process.env.OPENSHIFT_NODEJS_PORT||80);
 app.use(express.static(process.env.OPENSHIFT_REPO_DIR));
 app.use(function(req, res, next){
 	//res.send(404, 'Sorry cant find that!');
