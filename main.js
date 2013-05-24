@@ -8,8 +8,6 @@ var colors = require('colors'),
 	app = express(),
 	socket_session = {},
 	client_socket,
-	server = require('http').createServer(app),
-	io = require('socket.io').listen(server),
 	vId = null;
 
 /************************ Update tracking list ************************/
@@ -31,7 +29,7 @@ database.on('modulelist-server', function (response) {
 //start HTTP server
 app.use(express.compress());
 app.use(express.static(__dirname));
-app.use(function (req, res, next()) {
+app.use(function (req, res, next) {
 	console.log('[HTTP]'.grey, req.url);
 	next();
   //res.sendfile(__dirname + '/index.html');
@@ -42,6 +40,8 @@ app.use(function(req, res, next){
 });
 app.listen(process.env.OPENSHIFT_NODEJS_PORT);
 /*********************** Event pool with Socket.IO ****************************/
+var server = require('http').createServer(app),
+	io = require('socket.io').listen(server);
 io.enable('browser client minification');  // send minified client
 io.enable('browser client etag');          // apply etag caching logic based on version number
 io.enable('browser client gzip');          // gzip the file
