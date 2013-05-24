@@ -29,15 +29,18 @@ database.on('modulelist-server', function (response) {
 });
 /********************** HTTP server ***********************************/
 //start HTTP server
-app.use(express.static(process.env.OPENSHIFT_REPO_DIR));
+app.use(express.compress());
+app.use(express.static(__dirname));
+app.use(function (req, res, next()) {
+	console.log('[HTTP]'.grey, req.url);
+	next();
+  //res.sendfile(__dirname + '/index.html');
+});
 app.use(function(req, res, next){
 	//res.send(404, 'Sorry cant find that!');
 	res.status(404).sendfile('notfound.html');
 });
-app.use(function (req, res) {
-	console.log('[HTTP]'.grey, req.path);
-  //res.sendfile(__dirname + '/index.html');
-});
+app.listen(process.env.OPENSHIFT_NODEJS_PORT);
 /*********************** Event pool with Socket.IO ****************************/
 io.enable('browser client minification');  // send minified client
 io.enable('browser client etag');          // apply etag caching logic based on version number
