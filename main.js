@@ -1,4 +1,4 @@
-#!/bin/env node
+#!/usr/bina/env node
 var net = require('net');
 //var track = require('./kml_track');
 var colors = require('colors'),
@@ -29,7 +29,20 @@ database.on('modulelist-server', function (response) {
 });
 /********************** HTTP server ***********************************/
 //start HTTP server
-server.listen(process.env.OPENSHIFT_NODEJS_PORT);
+server.listen(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
+app.on('error', function (err) {
+    if (err.code == 'EADDRINUSE') {
+        logger("[express]".grey, "Address in use, trying again...");
+        setTimeout(function () {
+            app.close();
+            app.listen(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
+        }, 1000);
+    } else if (e.code == 'EACCES') {
+        logger("[express".grey, "You don't have permissions to bind to this address. Try running via sudo.");
+    } else {
+        logger("[express]".grey, err);
+    }
+});
 app.use(express.compress());
 app.use(express.static(__dirname));
 app.use(function (req, res, next) {
