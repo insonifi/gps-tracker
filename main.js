@@ -5,7 +5,8 @@ var colors = require('colors'),
 	queue = require('./queue'),
 	database = require('./database'),
 	express = require('express'),
-	app = express(),
+	app = express().createServer(),
+	io = require('socket.io').listen(app),
 	socket_session = {},
 	client_socket,
 	vId = null;
@@ -40,8 +41,6 @@ app.use(function(req, res, next){
 });
 app.listen(process.env.OPENSHIFT_NODEJS_PORT);
 /*********************** Event pool with Socket.IO ****************************/
-var server = require('http').createServer(app),
-	io = require('socket.io').listen(server);
 io.enable('browser client minification');  // send minified client
 io.enable('browser client etag');          // apply etag caching logic based on version number
 io.enable('browser client gzip');          // gzip the file
