@@ -30,7 +30,7 @@ database.on('modulelist-server', function (response) {
 /********************** HTTP server ***********************************/
 //start HTTP server
 server.listen(process.env.OPENSHIFT_NODEJS_PORT||80);
-app.use(express.static(__dirname + '/'));
+app.use(express.static(process.env.OPENSHIFT_REPO_DIR));
 app.use(function(req, res, next){
 	//res.send(404, 'Sorry cant find that!');
 	res.status(404).sendfile('notfound.html');
@@ -105,61 +105,3 @@ database.on('modulelist-client', function (response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('modulelist', response.list);
 });
-
-/*************************** GPS server *******************************/					
-/*
- var serverGPS = net.createServer(function(c) { //'connection' listener
-	console.log('[GPS]'.grey, 'Connection established');
-	queue.notProcessing = true;
-	c.on('end', function() {
-			console.log('[GPS]'.grey, vId, 'disconnected'.grey);
-			vId = null;
-		});
-	c.write('GpsTsc v3.2.15\r\n'); //greet client
-	c.on('data', function(chunk) {
-		var string = chunk.toString();
-		var lines = string.split('\r\n');
-		for (var i = 0; i < lines.length; i++) {
-			var line = lines[i];
-			//console.info('> %s', line);
-			if (line[0] == 'I') { //id
-				vId = line.slice(1);
-				console.log('[GPS]'.grey, vId, 'connected'.green);
-				continue
-			}
-			if (line[0] == 'D') { //expect to download batch of records//D####
-				console.log('[GPS]'.grey, vId, 'uploads %s coordinates', line.slice(1));
-				continue
-			}
-			if (line[0] == 'Q') {
-				console.log('[GPS]'.grey, vId, 'seen at', (new Date).toISOString());
-				continue
-			}
-			if (line[0] == 'M') {
-				//not implemeted, don't what this is:
-				//M98:000000,V,9900.000,N,00000.000,W,000.0,000,000000,010*47
-				continue
-			}
-			if (line[0] == '$') {
-				queue.add(vId + line); //add to parse queue
-				continue
-			}
-		}
-		c.write('0\r\n'); //respond back
-	});
-});
-serverGPS.listen(process.env.VCAP_APP_PORT || 920, function() { //'listening' listener
-  console.log('[GPS]'.grey, 'Server listening'.green);
-});
-
-function dump_kmz() {
-	var zip = require('node-zip')();
-	var fs = require('fs');
-	var kml = track.kml();
-	var name = new Date().toISOString().slice(0,10);
-
-	zip.file(name + '.kml', kml);
-	var data = zip.generate({base64:false,compression:'DEFLATE'});
-	fs.writeFile(name + '.kmz', data, 'binary');
-}
-*/
