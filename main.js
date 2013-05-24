@@ -35,7 +35,7 @@ app.use(function(req, res, next){
 	//res.send(404, 'Sorry cant find that!');
 	res.status(404).sendfile('notfound.html');
 });
-app.get('/', function (req, res) {
+app.use(function (req, res) {
 	console.log('[HTTP]'.grey, req.path);
   //res.sendfile(__dirname + '/index.html');
 });
