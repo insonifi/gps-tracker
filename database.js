@@ -66,7 +66,7 @@ Proto.updateModuleList = function(changes) {
 		if (changes.remove.length > 0) {
 			for (i = 0; i < changes.remove.length; i++) {
 				var module = changes.remove[i];
-				client.modules.remove({id: module.id});
+				Proto.collections.modules.remove({id: module.id});
 				client.dropCollection(module.id, function(err, result) {
 					if (err) error(err);
 					delete Proto.collections[module_id];
