@@ -113,6 +113,7 @@ Proto.getModuleList = function(request) {
 				if (err) {
 					error(err)
 				} else {
+					console.info('[database]'.grey, 'list created');
 					Proto.collections['modules'] = client.collection('modules');
 					acquire_list();
 				}
