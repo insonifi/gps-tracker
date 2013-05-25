@@ -96,7 +96,8 @@ Proto.getModuleList = function(request) {
 		stream.on('error', error);
 		stream.on('data', function (doc) {
 			list.push(doc);
-			Proto.collection[doc] = client.collection(doc);
+			//console.log('[database]'.grey, 'got', doc);
+			Proto.collection[doc.id] = client.collection(doc.id);
 		});
 		stream.on('end', function() {
 			console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
