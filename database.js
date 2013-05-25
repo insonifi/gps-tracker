@@ -69,7 +69,7 @@ Proto.updateModuleList = function(changes) {
 				Proto.collections.modules.remove({id: module.id}, error);
 				client.dropCollection(module.id, function(err, result) {
 					if (err) error(err);
-					delete Proto.collections[module_id];
+					delete Proto.collections[module.id];
 				});
 			}
 		}
