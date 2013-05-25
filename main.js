@@ -10,8 +10,14 @@ var colors = require('colors'),
 	io = require('socket.io').listen(server),
 	socket_session = {},
 	client_socket,
+	crypto = require('crypto'),
+	shasum = crypto.createHash('sha512'),
+	auth = require('./pwdhash'),
+	hash = null,
 	vId = null;
-
+/************************* Load password hash *************************/
+shasum.update(auth.hash);
+hash = shasum.digest('hex');
 /************************ Update tracking list ************************/
 //refresh tracked id list
 database.on('connected', function () {
@@ -104,6 +110,9 @@ io.sockets.on('connection', function (socket) {
 
 //update tracklist
 	global_socket.on('update-modulelist', function (changes) {
+		if (changes.hash != hash) {
+			console.log('[socket]'.grey, 'update rejected');
+		}
 		database.updateModuleList(changes);
 	});
 //get tracklist

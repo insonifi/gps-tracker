@@ -9,6 +9,7 @@
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
+		<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha512.js"></script>
 		<link type="text/css" href="./jquery-simple-datetimepicker/jquery.simple-dtpicker.css" rel="stylesheet" />
 		<link type="text/css" href="./strike4/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
 		<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
@@ -174,10 +175,11 @@
 				},
 				updateList: function () {
 					var table = document.getElementById('modulelist-table');
+					var pwdhash = CryptoJS.SHA512(document.getElementById('update-pwd').value)
 					var changes = {
 						add: [],
 						remove: [],
-						hash: ''
+						hash: pwdhash
 					}
 					var id;
 					for(var i = 0; i < table.childNodes.length; i++) {
@@ -191,9 +193,9 @@
 							changes.add.push({id: id, name: name});
 						}
 					}
+					
 					console.info('[updateList] update', 'add:',changes.add, 'remove', changes.remove);
 					$('#info').info('update', 'Update modules list');
-					changes.hash = md5(window.prompt('Password'));
 					socket.emit('update-modulelist', changes);
 					core.getList();
 				},
@@ -535,6 +537,7 @@
 				<table id='modulelist-table'></table>
 				<input type='button' id='update-list' value='Update'>
 				<input type='button' id='append-list' value='+'>
+				<input type='password' id='update-pwd' placeholder='Password'>
 			</div>
 		</div>
 		<div id='map'></div>

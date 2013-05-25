@@ -1,0 +1,3 @@
+module.exports = {
+	hash: 'd9718acbda7b956e9e681f2efd5b31a1bab0cdcf9817bebff997ded10f7f92b5c7b96bcf2ccd87612f223baf4cac01fb73f0c81ad64407677114b3602833f94f'
+}
