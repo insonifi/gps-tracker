@@ -3,7 +3,7 @@ var colors = require('colors'),
 	//host = process.env.OPENSHIFT_MONGODB_DB_HOST || 'localhost',
 	//port = process.env.OPENSHIFT_MONGODB_DB_PORT || 27013,
 	//server = new mongodb.Server(host, port, {auto_reconnect: true}),
-	db_uri = (process.env.OPENSHIFT_MONGODB_DB_URL || 'mongodb://127.0.0.1:27013/') + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
+	db_uri = (process.env.OPENSHIFT_MONGODB_DB_URL || 'mongodb://127.0.0.1:27017/') + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
 	//db = new mongodb.Db,
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter;
@@ -96,6 +96,7 @@ Proto.getModuleList = function(request) {
 		stream.on('error', error);
 		stream.on('data', function (doc) {
 			list.push(doc);
+			Proto.collection[doc] = client.collection(doc);
 		});
 		stream.on('end', function() {
 			console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
@@ -109,7 +110,6 @@ Proto.getModuleList = function(request) {
 		if (names.length == 0) {
 			console.info('[database]'.grey, 'no modules list found'.red);
 			client.createCollection('modules', {}, function(err, collection) {
-				console.info('[database]'.grey, 'creating modules list');
 				if (err) {
 					error(err)
 				} else {
@@ -119,6 +119,7 @@ Proto.getModuleList = function(request) {
 				}
 			});
 		} else {
+			Proto.collections['modules'] = client.collection('modules');
 			acquire_list();
 		}
 	});
