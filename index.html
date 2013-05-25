@@ -5,7 +5,6 @@
 		  src="https://maps.googleapis.com/maps/api/js?sensor=false">
 		</script>
 		<script src="/socket.io/socket.io.js"></script>
-		<script src="/md5.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
@@ -179,7 +178,7 @@
 					var changes = {
 						add: [],
 						remove: [],
-						hash: pwdhash
+						hash: pwdhash.toString()
 					}
 					var id;
 					for(var i = 0; i < table.childNodes.length; i++) {
