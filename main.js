@@ -110,10 +110,10 @@ io.sockets.on('connection', function (socket) {
 
 //update tracklist
 	global_socket.on('update-modulelist', function (changes) {
-		if (changes.hash != hash) {
-			console.log('[socket]'.grey, 'update rejected');
+		if (changes.hash == hash) {
+			console.log('[socket]'.grey, 'update accepted');
+			database.updateModuleList(changes);
 		}
-		database.updateModuleList(changes);
 	});
 //get tracklist
 	global_socket.on('get-modulelist', function () {
