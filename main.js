@@ -38,9 +38,9 @@ app.on('error', function (err) {
             app.listen(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
         }, 1000);
     } else if (e.code == 'EACCES') {
-        logger("[express".grey, "You don't have permissions to bind to this address. Try running via sudo.");
+        console.log("[express".grey, "You don't have permissions to bind to this address. Try running via sudo.");
     } else {
-        logger("[express]".grey, err);
+        console.log("[express]".grey, err);
     }
 });
 app.use(express.compress());
@@ -79,6 +79,7 @@ queue.on('send-update', function (data) {
 	io.sockets.emit('update-waypoint', data);
 });
 io.sockets.on('connection', function (socket) {
+	console.log('[socket]'.grey, 'new socket connected');
 	if (socket.id in socket_session) {
 		return
 	}
@@ -86,8 +87,9 @@ io.sockets.on('connection', function (socket) {
 	socket_session[socket.id] = socket;
 	global_socket.emit('handshake', { welcome: 'GPS Tracker 0.1' });
 	global_socket.on('disconnect', function () {
+		console.log('[socket]'.grey, 'socket disconnected');
 		delete socket_session[this.id];
-	});
+});
 //received trackdata
 	global_socket.on('gps-message', function (message) {
 		queue.add(message);
