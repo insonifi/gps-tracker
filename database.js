@@ -104,9 +104,9 @@ Proto.getModuleList = function(request) {
 	}
 
 	//ensure collection exists
-	client.collectionNames(function(err, names) {
+	client.collectionNames('modules', function(err, names) {
 		if (err) error(err);
-		if (names.indexOf('modules') == -1) {
+		if (names.length == 0) {
 			console.info('[database]'.grey, 'no modules list found'.red);
 			client.createCollection('modules', {}, function(err, collection) {
 				console.info('[database]'.grey, 'creating modules list');
