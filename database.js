@@ -89,7 +89,7 @@ Proto.getModuleList = function(request) {
 	
 	function acquire_list() {
 		if (!Proto.collections.modules) {
-			return console.info('[database]'.grey, 'modules list wasn\'t created'.red);
+			return console.info('[database]'.grey, 'modules list not found'.red);
 		}
 		var list = [],
 			stream = Proto.collections.modules.find().stream();
@@ -114,7 +114,7 @@ Proto.getModuleList = function(request) {
 					error(err)
 				} else {
 					console.info('[database]'.grey, 'list created');
-					Proto.collections['modules'] = client.collection('modules');
+					Proto.collections['modules'] = collection;
 					acquire_list();
 				}
 			});
