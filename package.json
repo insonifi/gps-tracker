@@ -6,13 +6,19 @@
     "node": ">= 0.6.0",
     "npm": ">= 1.0.0"
   },
-
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/insonifi/gps-tracker.git"
+  },
   "dependencies": {
     "express": "",
     "colors": "",
     "socket.io": "",
     "colors": "",
     "mongodb": ""
+  },
+  "scripts": {
+    "start": "node main.js"
   },
   "main": "main.js"
 }
