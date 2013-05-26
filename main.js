@@ -90,6 +90,9 @@ io.sockets.on('connection', function (socket) {
 	var global_socket = socket;
 	socket_session[socket.id] = socket;
 	global_socket.emit('handshake', { welcome: 'GPS Tracker 0.1' });
+	global_socket.on('handshake', function (message) {
+		console.log('[socket]'.grey, message, 'connected');
+	});
 	global_socket.on('disconnect', function () {
 		console.log('[socket]'.grey, 'socket disconnected');
 		delete socket_session[this.id];
