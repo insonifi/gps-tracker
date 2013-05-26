@@ -224,7 +224,6 @@
 					//text field Module Name
 					var inputName = document.createElement('input');
 					inputName.value = (item.id == undefined ? '' : item.name);
-					inputName.readOnly = editable == false ? true : false;
 					inputName.classList.add('module-name');
 					inputName.onchange = markChange;
 					//remove button

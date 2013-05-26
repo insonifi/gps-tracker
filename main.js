@@ -83,7 +83,6 @@ queue.on('send-update', function (data) {
 	io.sockets.emit('update-waypoint', data);
 });
 io.sockets.on('connection', function (socket) {
-	console.log('[socket]'.grey, 'new socket connected');
 	if (socket.id in socket_session) {
 		return
 	}
@@ -91,7 +90,7 @@ io.sockets.on('connection', function (socket) {
 	socket_session[socket.id] = socket;
 	global_socket.emit('handshake', { welcome: 'GPS Tracker 0.1' });
 	global_socket.on('handshake', function (message) {
-		console.log('[socket]'.grey, message, 'connected');
+		console.log('[socket]'.grey, message.welcome, 'connected');
 	});
 	global_socket.on('disconnect', function () {
 		console.log('[socket]'.grey, 'socket disconnected');
@@ -103,6 +102,11 @@ io.sockets.on('connection', function (socket) {
 	});
 //query
 	global_socket.on('query', function (data) {
+		for (property in data) {
+			if (undefined == property) {
+				return;
+			}
+		}
 		database.query({'socket_id': socket.id, 'module_id': data.module_id, 'begin': data.start, 'end': data.end});
 	});
 
