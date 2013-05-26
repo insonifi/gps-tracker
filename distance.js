@@ -1,4 +1,22 @@
-core.distance = function (coordsA, coordsB) {
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+/* Vincenty Inverse Solution of Geodesics on the Ellipsoid (c) Chris Veness 2002-2012             */
+/*                                                                                                */
+/* from: Vincenty inverse formula - T Vincenty, "Direct and Inverse Solutions of Geodesics on the */
+/*       Ellipsoid with application of nested equations", Survey Review, vol XXII no 176, 1975    */
+/*       http://www.ngs.noaa.gov/PUBS_LIB/inverse.pdf                                             */
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+/* http://www.movable-type.co.uk/scripts/latlong-vincenty.html 									  */
+
+/**
+ * Calculates geodetic distance between two points specified by latitude/longitude using 
+ * Vincenty inverse formula for ellipsoids
+ *
+ * @param   {Number} lat1, lon1: first point in decimal degrees
+ * @param   {Number} lat2, lon2: second point in decimal degrees
+ * @returns (Number} distance in metres between points
+ */
+
+calculateDistance = function (coordsA, coordsB) {
     Number.prototype.toRad = function() {
         return this * Math.PI / 180;
     }
@@ -40,7 +58,7 @@ core.distance = function (coordsA, coordsB) {
     B/6*cos2SigmaM*(-3+4*sinSigma*sinSigma)*(-3+4*cos2SigmaM*cos2SigmaM)));
   var s = b*A*(sigma-deltaSigma);
   
-  s = s.toFixed(0); // round to 1mm precision
+  s = s.toFixed(3); // round to 1mm precision
   return s;
   
   // note: to return initial/final bearings in addition to distance, use something like:

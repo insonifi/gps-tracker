@@ -1,7 +1,7 @@
 .q-table {width: 100%;}
 .q-row {}
 .q-row:hover {background: #ffffc8;}
-.q-time {border: #df7611; color: black; max-width: 5em; text-align: center;}
+.q-time {border: #df7611; color: black; max-width: 6em; text-align: center;}
 .q-time-now {
 	font-size: smaller;
 	border: #df7611;
@@ -65,4 +65,11 @@ input:focus {
 #clock {
 	font-size: smaller;
 	border: #df7611;
+}
+#select {
+	border-radius: 0.2em;
+	padding: 0.2em;
+	background: #E5E3E1;
+	position: absolute;
+	z-index: 2;
 }

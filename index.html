@@ -15,7 +15,7 @@
 		<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
 		<script>
 			var threshold = 5 * 60 * 1000 //5min  -- threshold to distinguish trips
-			var socket = io.connect('http://gpstracker-insonifi.rhcloud.com/');// + document.domain);
+			var socket = io.connect('http://' + document.domain);
 			(function () {
 				socket.on('handshake', function (data) {
 					console.log('[connected]', data.welcome);
@@ -72,6 +72,7 @@
 				query: function () {
 					core.flushTable('query-table');
 					core.flushTable('trips-table');
+					document.getElementById('trips-table').setAttribute('processed', false);
 					var re = /(\d+):(\d+)\ (\d+)\.(\d+)\.(\d+)/;//m:H D.M.YYYYY
 					var timeoffset = (new Date).getTimezoneOffset() / 60
 					//parse start date
@@ -206,10 +207,10 @@
 				displayList: function (list) {
 					core.flushTable('modulelist-table');
 					for (var i = 0; i < list.length; i++) {
-						core.addModuleId(list[i], editable = false);
+						core.addModuleId(list[i]);
 					}
 				},
-				addModuleId: function (item, editable) {
+				addModuleId: function (item) {
 					var table = document.getElementById('modulelist-table');
 					var row = document.createElement('tr');
 					var cell = row.insertCell(-1);
@@ -219,7 +220,7 @@
 					}
 					var inputId = document.createElement('input');
 					inputId.value = (item.id == undefined ? '' : item.id);
-					inputId.readOnly = editable == false ? true : false;
+					inputId.readOnly = true;
 					inputId.classList.add('module-id');
 					inputId.type = 'tel';
 					inputId.onchange = markChange;
@@ -264,7 +265,7 @@
 					var query = document.getElementById('query-table');
 					var trips = document.getElementById('trips-table');
 					//don't process repeatedly
-					if (trips.getAttribute('processed')) {
+					if (trips.getAttribute('processed') == 'true') {
 						return;
 					}
 					
@@ -276,15 +277,15 @@
 						start,
 						last,
 						calcTime,
-						distance,
+						distance = 0,
 						lastTime;
 			
 					do {
 						waypoint =  {
 							time: parseInt(waypointHtml.getAttribute('timestamp')),
 							address: waypointHtml.getAttribute('address'),
-							lat: waypointHtml.getAttribute('lat'),
-							lng: waypointHtml.getAttribute('long')
+							lat: parseFloat(waypointHtml.getAttribute('lat')),
+							lng: parseFloat(waypointHtml.getAttribute('long'))
 						};
 						//tripCoords.push([waypoint.lat, waypoint.lng]);
 						if (!start) start = waypoint;
@@ -292,8 +293,8 @@
 						//calculate
 						curTime = parseInt(waypoint.time);
 						calcTime = curTime - last.time;
-						distance += core.distance([start.lat, start.lng],
-														[last.lat, last.lng])
+						distance += parseFloat(calculateDistance([start.lat, start.lng],
+														[last.lat, last.lng]));
 						if(calcTime > threshold) {
 							if (start != last) {
 								routesCount++
@@ -309,7 +310,7 @@
 						//next iteration
 						waypointHtml = waypointHtml.nextSibling;
 					} while (waypointHtml);
-					trips.setAttribute('processed', true);
+					trips.setAttribute('processed', 'true');
 					console.info('[detectRoutes]', 'Detected', routesCount, 'routes');
 					$('#info').info('update', 'Detected ' + routesCount + ' routes');
 				},
@@ -344,11 +345,12 @@
 					
 					var cell_distance = trip.insertCell(-1);
 					cell_distance.classList.add('q-time');
-					cell_stopcell_distance.textContent= distance;
+					cell_distance.textContent= (distance / 1000).toFixed(2) + 'km';
 					
 					trip.onmouseover = function () {
-						
+						core.showSelect(trip);
 					}
+					trip.onmouseout = core.hideSelect;
 					trip.onclick = function() {
 						mapctl.showTripHistory(start.time, stop.time);
 					}
@@ -357,6 +359,7 @@
 				printReport: function () {
 					var trips = document.getElementById('trips-table');
 					var query = document.getElementById('query-table');
+					var module_name = document.querySelector('#modules-id').name;
 					var report;
 					if (query.style.display == 'none') {
 						report = trips;
@@ -367,11 +370,22 @@
 					var printFrame = document.getElementById('print-frame');
 					with (printFrame) {
 						contentDocument.write('<link type="text/css" href="./strike4/print.css" rel="stylesheet" />');
+						contentDocument.write(module_name);
 						contentDocument.write(report.outerHTML);
 						contentWindow.print();
 					}
 					$('#info').info('update', 'Printing');
-				}
+				},
+				showSelect: function (parent) {
+					var s = document.getElementById('select');
+					s.style.visibility = 'visible';
+					s.style.left = '80%';
+					s.style.top = $(parent).offset().top + 'px';
+				},
+				hideSelect: function () {
+					var s = document.getElementById('select');
+					s.style.visibility = 'hidden';
+				},
 			};
 			(function( $ ) {
 				var methods = {
@@ -552,6 +566,7 @@
 			</div>
 		</div>
 		<div id='map'></div>
+		<div id='select' style='visibility: hidden'>select</div>
 		<iframe id='print-frame'></iframe>
 		<script type="text/javascript">
 			$(function(){
