@@ -1,4 +1,4 @@
-#!/usr/bina/env node
+#!/usr/bin/env node
 var net = require('net');
 //var track = require('./kml_track');
 var colors = require('colors'),
