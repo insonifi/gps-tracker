@@ -102,11 +102,6 @@ io.sockets.on('connection', function (socket) {
 	});
 //query
 	global_socket.on('query', function (data) {
-		for (property in data) {
-			if (undefined == property) {
-				return;
-			}
-		}
 		database.query({'socket_id': socket.id, 'module_id': data.module_id, 'begin': data.start, 'end': data.end});
 	});
 

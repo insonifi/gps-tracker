@@ -139,6 +139,9 @@ Proto.query = function(request) {
 	console.log('[database]'.grey, 'Query', module_id, begin, '..', end);
 	/*** execute query ***/
 	collection = Proto.collections[module_id]
+	if (!collection) {
+		console.log('[database]'.grey, 'collection no ready');
+	}
 	var stream = collection.find({timestamp: {$gt: begin, $lt: end}}, {sort: ['timestamp', 'ascending']}
 	).stream()
 	var count = 0;
