@@ -40,7 +40,7 @@ Proto.addRecord = function(gps_msg) {
 		module_id = gps_msg.module_id,
 		collection = Proto.collections[module_id];
 	//insert new waypoint
-	collection.insert(gps_msg, {safe: true}, error);
+	collection.update({timestamp: gps_msg.timestamp}, {$set: gps_msg}, {safe: true, upsert: true}, error);
 	Proto.emit('record', true);
 }
 
