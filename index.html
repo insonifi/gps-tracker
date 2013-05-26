@@ -5,6 +5,7 @@
 		  src="https://maps.googleapis.com/maps/api/js?sensor=false">
 		</script>
 		<script src="/socket.io/socket.io.js"></script>
+		<script src="/distance.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="./jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
@@ -14,7 +15,7 @@
 		<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
 		<script>
 			var threshold = 5 * 60 * 1000 //5min  -- threshold to distinguish trips
-			var socket = io.connect('http://' + document.domain);
+			var socket = io.connect('http://gpstracker-insonifi.rhcloud.com/');// + document.domain);
 			(function () {
 				socket.on('handshake', function (data) {
 					console.log('[connected]', data.welcome);
@@ -174,7 +175,8 @@
 				},
 				updateList: function () {
 					var table = document.getElementById('modulelist-table');
-					var pwdhash = CryptoJS.SHA512(document.getElementById('update-pwd').value)
+					var pwdfield = document.getElementById('update-pwd');
+					var pwdhash = CryptoJS.SHA512(pwdfield.value)
 					var changes = {
 						add: [],
 						remove: [],
@@ -192,7 +194,7 @@
 							changes.add.push({id: id, name: name});
 						}
 					}
-					
+					pwdfield.value = '';
 					console.info('[updateList] update', 'add:',changes.add, 'remove', changes.remove);
 					$('#info').info('update', 'Update modules list');
 					socket.emit('update-modulelist', changes);
@@ -260,52 +262,58 @@
 				detectRoutes: function () {
 					var routesCount = 0;
 					var query = document.getElementById('query-table');
-			
 					var trips = document.getElementById('trips-table');
-					var tripCoords = [];
-			
+					//don't process repeatedly
+					if (trips.getAttribute('processed')) {
+						return;
+					}
+					
 					var waypointHtml = query.firstChild;
 					//do we have any waypoint?
 					if (waypointHtml == undefined) return;
-					var waypoint =  {
-							time: parseInt(waypointHtml.getAttribute('timestamp')),
-							address: waypointHtml.getAttribute('address'),
-							lat: waypointHtml.getAttribute('lat'),
-							lng: waypointHtml.getAttribute('long')
-						};
-					var start = waypoint,
-						last = start;
-					var calcTime,
+
+					var waypoint,
+						start,
+						last,
+						calcTime,
+						distance,
 						lastTime;
 			
-					while (waypointHtml) {
-						var waypoint =  {
+					do {
+						waypoint =  {
 							time: parseInt(waypointHtml.getAttribute('timestamp')),
 							address: waypointHtml.getAttribute('address'),
 							lat: waypointHtml.getAttribute('lat'),
 							lng: waypointHtml.getAttribute('long')
 						};
 						//tripCoords.push([waypoint.lat, waypoint.lng]);
-				
+						if (!start) start = waypoint;
+						if (!last) last = waypoint;
 						//calculate
 						curTime = parseInt(waypoint.time);
 						calcTime = curTime - last.time;
+						distance += core.distance([start.lat, start.lng],
+														[last.lat, last.lng])
 						if(calcTime > threshold) {
-							if (start == last) continue;
-							routesCount++
-							//tripCoords.push([last.lat, last.lng]);
-							trips.appendChild(core.tripRow(start, last, tripCoords));
-							//tripCoords = [];
-							start = waypoint;
+							if (start != last) {
+								routesCount++
+								trips.appendChild(core.tripRow(start, last, distance));
+							};
+							start = undefined;
+							last = undefined;
+							distance = 0;
+							waypointHtml = waypointHtml.nextSibling;
+							continue;
 						}
 						last = waypoint
 						//next iteration
 						waypointHtml = waypointHtml.nextSibling;
-					}
+					} while (waypointHtml);
+					trips.setAttribute('processed', true);
 					console.info('[detectRoutes]', 'Detected', routesCount, 'routes');
 					$('#info').info('update', 'Detected ' + routesCount + ' routes');
 				},
-				tripRow: function (start, stop, coords) {
+				tripRow: function (start, stop, distance) {
 					var trip = document.createElement('tr');
 					trip.classList.add('q-row');
 					var cell_startTime = trip.insertCell(-1);
@@ -333,9 +341,14 @@
 					var cell_stopAddress = trip.insertCell(-1);
 					cell_stopAddress.classList.add('q-address');
 					cell_stopAddress.textContent= stop.address;
-			
-					//trip.setAttribute('coordinates', coords.join('_'));
-			
+					
+					var cell_distance = trip.insertCell(-1);
+					cell_distance.classList.add('q-time');
+					cell_stopcell_distance.textContent= distance;
+					
+					trip.onmouseover = function () {
+						
+					}
 					trip.onclick = function() {
 						mapctl.showTripHistory(start.time, stop.time);
 					}

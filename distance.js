@@ -1,4 +1,4 @@
-module.exports.distVincenty = function (coordsA, coordsB) {
+core.distance = function (coordsA, coordsB) {
     Number.prototype.toRad = function() {
         return this * Math.PI / 180;
     }

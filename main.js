@@ -30,13 +30,15 @@ database.on('modulelist-server', function (response) {
 });
 /********************** HTTP server ***********************************/
 //start HTTP server
-server.listen(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
+var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
+var port = process.env.OPENSHIFT_NODEJS_PORT || 80;
+server.listen(port, ip);
 app.on('error', function (err) {
     if (err.code == 'EADDRINUSE') {
         logger("[express]".grey, "Address in use, trying again...");
         setTimeout(function () {
             app.close();
-            app.listen(process.env.OPENSHIFT_NODEJS_PORT, process.env.OPENSHIFT_NODEJS_IP);
+            app.listen(port, ip);
         }, 1000);
     } else if (e.code == 'EACCES') {
         console.log("[express".grey, "You don't have permissions to bind to this address. Try running via sudo.");

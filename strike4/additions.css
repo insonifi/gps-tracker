@@ -39,7 +39,9 @@ input {
 	padding: 5px;
 	border-radius: 5px;
 }
-
+input#update-pwd {
+	width: 5em;
+}
 input:focus {
 	border: 1px solid #df7611;
 	padding: 5px;
