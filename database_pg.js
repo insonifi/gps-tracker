@@ -28,7 +28,7 @@ client.connect(function (err) {
 		client.query({
 			text: 'CREATE TABLE waypoints ('
 			+ 'module_id	varchar(20),'
-			+ 'timestampt	timestamp,'
+			+ 'timestamp	timestamp,'
 			+ 'address		varchar(100),'
 			+ 'lat		real,'
 			+ 'long		real,'
