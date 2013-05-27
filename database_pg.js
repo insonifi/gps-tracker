@@ -125,7 +125,8 @@ Proto.getModuleList = function(request) {
 		return;
 	}
 	var dst = request.client,
-		client_id = request.socket_id;
+		client_id = request.socket_id,
+		list = [];
 
 	console.info('[database]'.grey, 'request module list');
 	
