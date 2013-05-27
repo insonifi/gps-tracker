@@ -39,7 +39,7 @@ client.connect(function (err) {
 				+ 'track		smallint,'
 				+ 'magv		smallint,'
 				+ 'PRIMARY KEY (module_id, timestamp) '
-				+ 'END IF';
+				+ 'END IF'
 			}, error);
 		client.query({
 			text: 'IF NOT EXISTS (SELECT * FROM pg_catalog.pg_tables'
@@ -47,7 +47,7 @@ client.connect(function (err) {
 				+ 'CREATE TABLE modules ('
 				+ 'module_id	varchar(20) PRIMARY KEY,'
 				+ 'name		varchar(20)) '
-				+ 'END IF';
+				+ 'END IF'
 			}, error);
 });
 
