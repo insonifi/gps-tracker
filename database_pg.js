@@ -85,8 +85,9 @@ Proto.updateModuleList = function(changes) {
 	}
 	if(changes) {
 		console.log('[database]'.grey, 'add', changes.add, 'remove', changes.remove);
-		if (changes.add.length > 0) {
-			for (i = 0; i < changes.add.length; i++) {
+		var add_length = changes.add.length;
+		if (add_length > 0) {
+			for (i = 0; i < add_length; i++) {
 				var add_module = changes.add[i];
 				client.query({
 					text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
@@ -98,8 +99,9 @@ Proto.updateModuleList = function(changes) {
 				}, error);
 			}
 		}
-		if (changes.remove.length > 0) {
-			for (i = 0; i < changes.remove.length; i++) {
+		var rm_length = changes.remove.length;
+		if (rm_length > 0) {
+			for (i = 0; i < rm_length; i++) {
 				var rm_module = changes.remove[i];
 				client.query({
 					text: 'DELETE FROM waypoints WHERE module_id = $1',

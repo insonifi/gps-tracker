@@ -20,11 +20,12 @@ database.on('connected', function () {
 });
 //server tracked id list
 database.on('modulelist-server', function (response) {
-	var list = response.list
+	var list = response.list,
+		length = list.length;
 	queue.isTracked = {};
 	console.log('[GPS]'.grey, 'updating tracked modules list:', list);
 	if (list == undefined) return;
-	for (var i = 0; i < list.length; i++) {
+	for (var i = 0; i < length; i++) {
 		queue.isTracked[list[i].module_id] = true;
 	}
 });
