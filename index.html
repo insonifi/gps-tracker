@@ -61,7 +61,7 @@
 					select.innerHTML = '';
 					for (var i = 0; i < list.length; i++){
 						var newid = document.createElement('option');
-						newid.value = list[i].id;
+						newid.value = list[i].module_id;
 						newid.textContent = list[i].name;
 						select.appendChild(newid);
 					}

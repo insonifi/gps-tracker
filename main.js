@@ -25,7 +25,7 @@ database.on('modulelist-server', function (response) {
 	console.log('[GPS]'.grey, 'updating tracked modules list:', list);
 	if (list == undefined) return;
 	for (var i = 0; i < list.length; i++) {
-		queue.isTracked[list[i].id] = true;
+		queue.isTracked[list[i].module_id] = true;
 	}
 });
 /********************** HTTP server ***********************************/
