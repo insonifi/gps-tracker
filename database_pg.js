@@ -4,9 +4,9 @@ var colors = require('colors'),
 	client = new pg.Client(db_uri),
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter,
-	Proto.ready = false,
-	Proto.collections = {},
 	expire_yr = 2;
+	Proto.ready = false;
+	
 	
 console.log('[database]'.grey, 'connecting to'.grey, db_uri);
 	
