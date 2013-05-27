@@ -37,12 +37,12 @@ client.connect(function (err) {
 				+ 'track		smallint,'
 				+ 'magv		smallint,'
 				+ 'PRIMARY KEY (module_id, timestamp)'
-			}, error});
+			}, error);
 		client.query({
 			text: 'CREATE TABLE IF NOT EXISTS modules ('
 				+ 'module_id	varchar(20) PRIMARY KEY,'
 				+ 'name		varchar(20))'
-			}, error});
+			}, error);
 });
 
 
@@ -159,7 +159,7 @@ Proto.query = function(request) {
 	/*** execute query ***/
 
 	var query_waypoints = client.query({
-		text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp BETWEEN $2 AND $3'
+		text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp BETWEEN $2 AND $3',
 		values: [module_id, begin, end]
 	}, error);
 	query_waypoints.on('row', function (row) {
