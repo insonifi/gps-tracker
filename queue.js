@@ -3,7 +3,7 @@ var Proto = new EventEmitter;
 var googleApi = require('./google_api');
 var database = require('./database_pg');
 var nmea = require('./nmea');
-var queue = new Array;
+var queue = [];
 
 googleApi.on('address', function (gps_msg) {
 	database.addRecord(gps_msg);
@@ -24,7 +24,7 @@ Proto.add = function (input) {
 }
 
 
-Proto.isTracked = new Object;
+Proto.isTracked = {};
 Proto.on('next', function () {
 	if(queue.length > 0) {
 		var string = queue.shift();
