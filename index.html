@@ -88,7 +88,7 @@
 			
 					var module_id = document.querySelector('#modules-id').value;
 					console.info('[query]', module_id, startDate, '...', endDate);
-					socket.emit('query', {module_id: module_id, start: startDate.valueOf(), end: endDate.valueOf()});
+					socket.emit('query', {module_id: module_id, start: startDate.toISOString(), end: endDate.toISOString()});
 				},
 				//render way point in corresponding table
 				showWaypoint: function (message, tableName) {
