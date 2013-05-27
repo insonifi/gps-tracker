@@ -23,32 +23,27 @@ client.connect(function (err) {
 			return;
 		}
 		console.log('[database]'.grey, 'connected to database');
-		Proto.ready = true;
-		Proto.emit('connected');
+		
 		//create waypoints table if doesn't exists
 		client.query({
-			text: 'IF NOT EXISTS (SELECT * FROM pg_catalog.pg_tables'
-				+ 'WHERE tablename = waypoints) '
-				+ 'CREATE TABLE waypoints ('
-				+ 'module_id	varchar(20),'
-				+ 'timestampt	timestamp,'
-				+ 'address		varchar(100),'
-				+ 'lat			real,'
-				+ 'long		real,'
-				+ 'kph			real,'
-				+ 'track		smallint,'
-				+ 'magv		smallint,'
-				+ 'PRIMARY KEY (module_id, timestamp) '
-				+ 'END IF'
-			}, error);
+			text: 'CREATE TABLE waypoints ('
+			+ 'module_id	varchar(20),'
+			+ 'timestampt	timestamp,'
+			+ 'address		varchar(100),'
+			+ 'lat		real,'
+			+ 'long		real,'
+			+ 'kph		real,'
+			+ 'track	smallint,'
+			+ 'magv		smallint,'
+			+ 'PRIMARY KEY (module_id, timestamp))'
+		}, error);
 		client.query({
-			text: 'IF NOT EXISTS (SELECT * FROM pg_catalog.pg_tables'
-				+ 'WHERE tablename = waypoints) '
-				+ 'CREATE TABLE modules ('
-				+ 'module_id	varchar(20) PRIMARY KEY,'
-				+ 'name		varchar(20)) '
-				+ 'END IF'
-			}, error);
+			text: 'CREATE TABLE modules ('
+			+ 'module_id	varchar(20) PRIMARY KEY,'
+			+ 'name		varchar(20))'
+		}, error);
+		Proto.ready = true;
+		Proto.emit('connected');
 });
 
 
