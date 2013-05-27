@@ -57,9 +57,10 @@
 				//got tracked modules list
 				socket.on('modulelist', function (list) {
 					console.info('[list]', list);
-					var select = document.getElementById('modules-id');
+					var select = document.getElementById('modules-id'),
+						list_len = list.length;
 					select.innerHTML = '';
-					for (var i = 0; i < list.length; i++){
+					for (var i = 0; i < list_len; i++){
 						var newid = document.createElement('option');
 						newid.value = list[i].module_id;
 						newid.textContent = list[i].name;
@@ -206,7 +207,8 @@
 				},
 				displayList: function (list) {
 					core.flushTable('modulelist-table');
-					for (var i = 0; i < list.length; i++) {
+					var list_len = list.length;
+					for (var i = 0; i < list_len i++) {
 						core.addModuleId(list[i], readonly = true);
 					}
 				},
@@ -219,14 +221,14 @@
 						this.parentNode.classList.add('changed');
 					}
 					var inputId = document.createElement('input');
-					inputId.value = (item.id == undefined ? '' : item.id);
+					inputId.value = (item.module_id == undefined ? '' : item.module_id);
 					inputId.readOnly = readonly ? true : false;
 					inputId.classList.add('module-id');
 					inputId.type = 'tel';
 					inputId.onchange = markChange;
 					//text field Module Name
 					var inputName = document.createElement('input');
-					inputName.value = (item.id == undefined ? '' : item.name);
+					inputName.value = (item.name == undefined ? '' : item.name);
 					inputName.classList.add('module-name');
 					inputName.onchange = markChange;
 					//remove button
