@@ -16,6 +16,18 @@ function validate_nmea(input) {
     }
 }
 
+/* nmea = {
+ * 	timestamp
+ * 	lat
+ * 	long
+ * 	kph
+ * 	track
+ * 	magv
+ * 	isValid
+ * }
+ */ 
+
+
 exports.parse = function (input) {
 	//validate string, return if invalid
 	validatedStr = validate_nmea(input)
@@ -34,8 +46,8 @@ exports.parse = function (input) {
 			data[0].slice(0,2),
 			data[0].slice(2,4),
 			data[0].slice(4,6)
-		))).valueOf()//store date as integer	//.toUTCString();
-		nmea.isValid = data[1] == 'A';
+		))).toISOString();//.valueOf()//store date as integer	//.toUTCString();
+		//nmea.isValid = data[1] == 'A';
 		nmea.lat = ((((data[2] | 0) / 100) | 0) + (parseFloat(data[2]) % 100) * 0.0166666666667).toFixed(6);
 		if (data[3] == 'S') nmea.lat = -nmea.lat;
 		nmea.long = ((((data[4] | 0) / 100) | 0) + (parseFloat(data[4]) % 100) * 0.0166666666667).toFixed(6);

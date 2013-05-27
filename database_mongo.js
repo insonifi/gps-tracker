@@ -24,9 +24,9 @@ MongoClient.connect(db_uri, function(err, client_instance) {
 });
 
 function error(err, object) {
-        if (err) console.warn('[database]'.grey, err.message.red);
-        else console.dir(object);  // undefined if no matching object exists.
- }
+        if (err) {console.warn('[database]'.grey, err.message.red);}
+        else {console.dir(object);} // undefined if no matching object exists.
+}
 Proto.on('record', function() {
 	console.info('[database]'.grey, 'record added');
 });
@@ -36,13 +36,12 @@ Proto.addRecord = function(gps_msg) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		return;
 	}
-	var client = Proto.client,
-		module_id = gps_msg.module_id,
+	var module_id = gps_msg.module_id,
 		collection = Proto.collections[module_id];
 	//insert new waypoint
 	collection.update({timestamp: gps_msg.timestamp}, {$set: gps_msg}, {safe: true, upsert: true}, error);
 	Proto.emit('record', true);
-}
+};
 
 Proto.updateModuleList = function(changes) {
 	if (!Proto.ready) {
@@ -53,29 +52,29 @@ Proto.updateModuleList = function(changes) {
 	if(changes) {
 		console.log('[database]'.grey, 'add', changes.add, 'remove', changes.remove);
 		if (changes.add.length > 0) {
-			for (i = 0; i < changes.add.length; i++) {
-				var module = changes.add[i];
-				Proto.collections.modules.update({id: module.id},{ $set:{name: module.name}}, {upsert: true}, error);
-				client.createCollection(module.id, {}, function(err, collection) {
+			for (var i = 0; i < changes.add.length; i++) {
+				var add_module = changes.add[i];
+				Proto.collections.modules.update({id: add_module.id},{ $set:{name: add_module.name}}, {upsert: true}, error);
+				client.createCollection(add_module.id, {}, function(err, collection) {
 					if (err) error(err);
-					Proto.collections[module.id] = collection;
+					Proto.collections[add_module.id] = collection;
 					collection.ensureIndex({timestamps: 1}, {expireAfterSeconds: 60 * 24 * 365 * 2}, error);
 				});
 			}
 		}
 		if (changes.remove.length > 0) {
-			for (i = 0; i < changes.remove.length; i++) {
-				var module = changes.remove[i];
-				Proto.collections.modules.remove({id: module.id}, error);
-				client.dropCollection(module.id, function(err, result) {
+			for (var i = 0; i < changes.remove.length; i++) {
+				var rm_module = changes.remove[i];
+				Proto.collections.modules.remove({id: rm_module.id}, error);
+				client.dropCollection(rm_module.id, function(err) {
 					if (err) error(err);
-					delete Proto.collections[module.id];
+					delete Proto.collections[rm_module.id];
 				});
 			}
 		}
 		this.getModuleList({'client': 'server'});
 	}
-}
+};
 Proto.getModuleList = function(request) {
 	if (!Proto.ready) {
 		console.log('[database]'.grey, 'not ready yet'.red);
@@ -108,7 +107,7 @@ Proto.getModuleList = function(request) {
 	//ensure collection exists
 	client.collectionNames('modules', function(err, names) {
 		if (err) error(err);
-		if (names.length == 0) {
+		if (names.length === 0) {
 			console.info('[database]'.grey, 'no modules list found'.red);
 			client.createCollection('modules', {}, function(err, collection) {
 				if (err) {
@@ -124,7 +123,7 @@ Proto.getModuleList = function(request) {
 			acquire_list();
 		}
 	});
-}
+};
 
 Proto.query = function(request) {
 	if (!Proto.ready) {
@@ -138,13 +137,13 @@ Proto.query = function(request) {
 	var client_id = request.socket_id;
 	console.log('[database]'.grey, 'Query', module_id, begin, '..', end);
 	/*** execute query ***/
-	collection = Proto.collections[module_id]
+	var collection = Proto.collections[module_id];
 	if (!collection) {
 		console.log('[database]'.grey, 'collection no ready');
 		return;
 	}
 	var stream = collection.find({timestamp: {$gt: begin, $lt: end}}, {sort: ['timestamp', 'ascending']}
-	).stream()
+	).stream();
 	var count = 0;
 	stream.on('error', error);
 	stream.on('data', function (doc) {
@@ -155,6 +154,6 @@ Proto.query = function(request) {
 		console.log('[database]'.grey, 'query complete, found', count);
 		Proto.emit('count', {'socket_id': client_id, 'count': count});
 	});
-}
+};
 
 module.exports = Proto;
