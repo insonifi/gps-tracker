@@ -93,7 +93,7 @@ Proto.updateModuleList = function(changes) {
 					values: [add_module.id, add_module.name]
 				}, error);
 				client.query({
-					text: 'INSERT INTO modules(module_id, name) value($1, $2)',
+					text: 'INSERT INTO modules(module_id, name) values($1, $2)',
 					values: [add_module.id, add_module.name]
 				}, error);
 			}
