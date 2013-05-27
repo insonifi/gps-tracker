@@ -15,7 +15,7 @@
     "colors": "",
     "socket.io": "",
     "colors": "",
-    "mongodb": ""
+    "pg": ""
   },
   "scripts": {
     "start": "node main.js"
