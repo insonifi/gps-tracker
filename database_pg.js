@@ -27,7 +27,9 @@ client.connect(function (err) {
 		Proto.emit('connected');
 		//create waypoints table if doesn't exists
 		client.query({
-			text: 'CREATE TABLE IF NOT EXISTS waypoints ('
+			text: 'IF NOT EXISTS (SELECT * FROM pg_catalog.pg_tables'
+				+ 'WHERE tablename = waypoints) '
+				+ 'CREATE TABLE waypoints ('
 				+ 'module_id	varchar(20),'
 				+ 'timestampt	timestamp,'
 				+ 'address		varchar(100),'
@@ -36,12 +38,16 @@ client.connect(function (err) {
 				+ 'kph			real,'
 				+ 'track		smallint,'
 				+ 'magv		smallint,'
-				+ 'PRIMARY KEY (module_id, timestamp)'
+				+ 'PRIMARY KEY (module_id, timestamp) '
+				+ 'END IF';
 			}, error);
 		client.query({
-			text: 'CREATE TABLE IF NOT EXISTS modules ('
+			text: 'IF NOT EXISTS (SELECT * FROM pg_catalog.pg_tables'
+				+ 'WHERE tablename = waypoints) '
+				+ 'CREATE TABLE modules ('
 				+ 'module_id	varchar(20) PRIMARY KEY,'
-				+ 'name		varchar(20))'
+				+ 'name		varchar(20)) '
+				+ 'END IF';
 			}, error);
 });
 
