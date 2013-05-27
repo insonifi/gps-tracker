@@ -41,7 +41,7 @@ Proto.on('next', function () {
 			googleApi.addressLookup(gps_msg);
 		}
 		//initiate next message processing with a delay
-		var delay = 300 + Math.random() * 1000;//introduce some interval to avoit OVER_QUERY_LIMIT
+		var delay = 300 + Math.random() * 1000;//introduce some interval to avoid OVER_QUERY_LIMIT
 		setTimeout(function () {
 			console.log('[queue]'.grey, 'process next', (new Date).toISOString());
 			Proto.emit('next');

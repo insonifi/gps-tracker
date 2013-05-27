@@ -58,5 +58,5 @@ exports.parse = function (input) {
 		nmea.magv = data[9];
 		return nmea;
 	}
-	return {text: 'no parser for ' + code, valid: false}; 
+	return {text: 'no parser for ' + code, isValid: false}; 
 }
