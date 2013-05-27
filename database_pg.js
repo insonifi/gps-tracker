@@ -59,8 +59,7 @@ Proto.addRecord = function(gps_msg) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
-	var client = Proto.client,
-		g = gps_msg;
+	var g = gps_msg;
 	//insert new waypoint
 	client.query({
 		text: 'INSERT INTO waypoints '
@@ -84,7 +83,6 @@ Proto.updateModuleList = function(changes) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
-	var client = Proto.client;
 	if(changes) {
 		console.log('[database]'.grey, 'add', changes.add, 'remove', changes.remove);
 		if (changes.add.length > 0) {
