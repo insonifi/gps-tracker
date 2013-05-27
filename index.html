@@ -207,10 +207,10 @@
 				displayList: function (list) {
 					core.flushTable('modulelist-table');
 					for (var i = 0; i < list.length; i++) {
-						core.addModuleId(list[i]);
+						core.addModuleId(list[i], readonly = true);
 					}
 				},
-				addModuleId: function (item) {
+				addModuleId: function (item, readonly) {
 					var table = document.getElementById('modulelist-table');
 					var row = document.createElement('tr');
 					var cell = row.insertCell(-1);
@@ -220,7 +220,7 @@
 					}
 					var inputId = document.createElement('input');
 					inputId.value = (item.id == undefined ? '' : item.id);
-					inputId.readOnly = true;
+					inputId.readOnly = readonly ? true : false;
 					inputId.classList.add('module-id');
 					inputId.type = 'tel';
 					inputId.onchange = markChange;
