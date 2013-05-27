@@ -89,12 +89,12 @@ Proto.updateModuleList = function(changes) {
 			for (i = 0; i < changes.add.length; i++) {
 				var add_module = changes.add[i];
 				client.query({
-					text: 'UPDATE modules SET name = $1 WHERE module_id = $2',
-					value: [add_module.name, add_module.id]
+					text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
+					values: [add_module.id, add_module.name]
 				}, error);
 				client.query({
 					text: 'INSERT INTO modules(module_id, name) value($1, $2)',
-					value: [add_module.id, add_module.name]
+					values: [add_module.id, add_module.name]
 				}, error);
 			}
 		}
@@ -103,11 +103,11 @@ Proto.updateModuleList = function(changes) {
 				var rm_module = changes.remove[i];
 				client.query({
 					text: 'DELETE FROM waypoints WHERE module_id = $1',
-					value: [rm_module.id]
+					values: [rm_module.id]
 				}, error);
 				client.query({
 					text: 'DELETE FROM modules WHERE module_id = $1',
-					value: [rm_module.id]
+					values: [rm_module.id]
 				}, error);
 				
 			}
