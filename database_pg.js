@@ -132,7 +132,7 @@ Proto.getModuleList = function(request) {
 	console.info('[database]'.grey, 'request module list');
 	
 	var query_modules = client.query({
-		text: 'SELECT id, name FROM modules'
+		text: 'SELECT * FROM modules'
 	}, error);
 	
 	query_modules.on('row', function (row) {
