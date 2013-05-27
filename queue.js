@@ -1,7 +1,7 @@
 var EventEmitter = require('events').EventEmitter;
 var Proto = new EventEmitter;
 var googleApi = require('./google_api');
-var database = require('./database');
+var database = require('./database_pg');
 var nmea = require('./nmea');
 var queue = new Array;
 
