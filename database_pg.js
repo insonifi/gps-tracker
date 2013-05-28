@@ -173,10 +173,11 @@ Proto.query = function(request) {
 		return;
 	}
 	/*** prepare query parameters ***/
-	var begin = request.begin;
-	var end = request.end;
-	var module_id = request.module_id;
-	var client_id = request.socket_id;
+	var begin = request.begin,
+		end = request.end,
+		module_id = request.module_id,
+		client_id = request.socket_id,
+		count;
 	console.log('[database]'.grey, 'Query', module_id, begin, '..', end);
 	/*** execute query ***/
 
@@ -190,7 +191,7 @@ Proto.query = function(request) {
 	});
 	query_waypoints.on('end', function() {
 		console.log('[database]'.grey, 'query complete, found', count);
-		Proto.emit('count', {'socket_id': client_id, 'count': count});
+		Proto.emit('end', {'socket_id': client_id, 'count': count});
 	});
 }
 

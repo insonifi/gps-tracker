@@ -126,7 +126,7 @@ database.on('result', function(response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('query-waypoint', response.result);
 });
-database.on('count', function(response) {
+database.on('end', function(response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('count', response.count);
 });
