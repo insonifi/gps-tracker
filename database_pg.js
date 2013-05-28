@@ -177,7 +177,7 @@ Proto.query = function(request) {
 		end = request.end,
 		module_id = request.module_id,
 		client_id = request.socket_id,
-		count;
+		count = 0;
 	console.log('[database]'.grey, 'Query', module_id, begin, '..', end);
 	/*** execute query ***/
 

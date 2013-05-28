@@ -128,7 +128,7 @@ database.on('result', function(response) {
 });
 database.on('end', function(response) {
 	client_socket = socket_session[response.socket_id];
-	client_socket.emit('count', response.count);
+	client_socket.emit('query-end', response.count);
 });
 database.on('modulelist-client', function (response) {
 	client_socket = socket_session[response.socket_id];

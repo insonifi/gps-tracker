@@ -23,7 +23,7 @@
 					core.getList();
 				});
 				//query finished
-				socket.on('count', function (count) {
+				socket.on('query-end', function (count) {
 					console.log('[query]', 'found ' + count);
 					$('#info').info('update', 'found ' + count, 'info');
 					setTimeout(function () {
@@ -108,7 +108,7 @@
 					}
 			
 					var time = row.insertCell(-1);
-					var g_time = new Date(parseInt(message.timestamp));
+					var g_time = new Date(message.timestamp);
 					if(tableName == 'updates-table') {
 						if(table.childNodes.length > 10) { //limit to last 10 updates
 							table.removeChild(table.firstChild);
@@ -284,7 +284,7 @@
 			
 					do {
 						waypoint =  {
-							time: parseInt(waypointHtml.getAttribute('timestamp')),
+							time: new Date(waypointHtml.getAttribute('timestamp')).valueOf(),
 							address: waypointHtml.getAttribute('address'),
 							lat: parseFloat(waypointHtml.getAttribute('lat')),
 							lng: parseFloat(waypointHtml.getAttribute('long'))
@@ -293,7 +293,7 @@
 						if (!start) start = waypoint;
 						if (!last) last = waypoint;
 						//calculate
-						curTime = parseInt(waypoint.time);
+						curTime = waypoint.time;
 						calcTime = curTime - last.time;
 						distance += parseFloat(calculateDistance([start.lat, start.lng],
 														[last.lat, last.lng]));
