@@ -81,8 +81,7 @@ Proto.addRecord = function(gps_msg) {
 			client.query({
 				text: 'UPDATE waypoints SET '
 					+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
-					+ 'WHERE module_id = $1 and timestamp = $2'
-					+ 'values($1, $2, $3, $4, $5, $6, $7, $8)',
+					+ 'WHERE module_id = $1 and timestamp = $2',
 				values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
 			}, error);
 		}
