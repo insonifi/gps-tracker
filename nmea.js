@@ -56,6 +56,7 @@ exports.parse = function (input) {
 		nmea.track = data[7];
 		//nmea.timestamp = new Date();
 		nmea.magv = data[9];
+		nmea.isValid = true;
 		return nmea;
 	}
 	return {text: 'no parser for ' + code, isValid: false}; 

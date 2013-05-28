@@ -43,7 +43,7 @@ Proto.on('next', function () {
 		//initiate next message processing with a delay
 		var delay = 300 + Math.random() * 1000;//introduce some interval to avoid OVER_QUERY_LIMIT
 		setTimeout(function () {
-			console.log('[queue]'.grey, 'process next', (new Date).toTimeString().white);
+			console.log('[queue]'.grey, 'process next', (new Date).toISOString().slice(11,23).white);
 			Proto.emit('next');
 		}, delay);
 	} else {
