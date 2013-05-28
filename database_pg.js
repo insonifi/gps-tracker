@@ -20,7 +20,7 @@ var cleanup = function () {
 	//delete expired records if any
 	console.log('[database]'.grey, 'cleaning up');
 	client.query({
-		text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\'::interval)',
+		text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\')::interval',
 		values: [expire_yr]
 	}, error);
 }
@@ -54,7 +54,7 @@ client.connect(function (err) {
 		Proto.ready = true;
 		Proto.emit('connected');
 		//start clenup service to remove old data regularly (24h)
-		setInterval(cleanup, 3600 * 24);
+		setInterval(cleanup, 1000 * 3600 * 24);
 });
 
 

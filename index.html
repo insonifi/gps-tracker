@@ -475,13 +475,15 @@
 						active.setVisible(false);
 					},
 					showTripHistory: function (start, stop) {
-						var path = [];
-						var waypoint = document.getElementById(start);
+						var path = [],
+							waypoint = document.getElementById(start),
+							stop_time = new Date(stop);
 				
-						while(waypoint.getAttribute('timestamp') <= stop) {
+						do {
+							time = new Date(waypoint.getAttribute('timestamp'))
 							path.push(new google.maps.LatLng(waypoint.getAttribute('lat'), waypoint.getAttribute('long')))
 							waypoint = waypoint.nextSibling;
-						}
+						} while(time <= stop_time)
 						hpath.setPath(path);
 						hpath.setVisible(true);
 					},
