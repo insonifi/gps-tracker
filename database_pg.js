@@ -19,7 +19,7 @@ var error = function (err) {
 var cleanup = function () {
 	//delete expired records if any
 	client.query({
-		text: 'DELETE waypoints WHERE timestamp (now() - \'$1 years\'::interval)',
+		text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\'::interval)',
 		values: [expire_yr]
 	}, error);
 }
