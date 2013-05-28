@@ -79,16 +79,19 @@ Proto.addRecord = function(gps_msg) {
 		values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
 	});
 	insert.on('error', function () {
-		client.query({
+		var update = client.query({
 			text: 'UPDATE waypoints SET '
 				+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
 				+ 'WHERE module_id = $1 and timestamp = $2',
 			values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
 		}, error);
+		update.on('end', function () {
+			Proto.emit('record', true);
+		});	
 	});
-	
-	Proto.emit('record', true);
-	
+	insert.on('end', function () {
+		Proto.emit('record', true);
+	});	
 }
 
 Proto.updateModuleList = function(changes) {
@@ -157,7 +160,7 @@ Proto.getModuleList = function(request) {
 		result.addRow(row);
 	}, error);
 	query_modules.on('end', function(result) {
-		console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
+		console.info('[database]'.grey, 'found', list == undefined ? '0' : result.rows.length, 'in track modules list');
 		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': result.rows});
 	}, error);
 }
