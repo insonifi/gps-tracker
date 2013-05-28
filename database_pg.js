@@ -72,21 +72,19 @@ Proto.addRecord = function(gps_msg) {
 	}
 	var g = gps_msg;
 	//insert new waypoint
-	client.query({
+	var insert = client.query({
 		text: 'INSERT INTO waypoints '
 			+ '(module_id, timestamp, address, lat, long, kph, track, magv) '
 			+ 'values($1, $2, $3, $4, $5, $6, $7, $8)',
 		values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
-	}, function (err) {
-		if (err != null) {
-			client.query({
-				text: 'UPDATE waypoints SET '
-					+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
-					+ 'WHERE module_id = $1 and timestamp = $2',
-				values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
-			}, error);
-		}
-	});
+	})
+	insert.on('error', function () {
+		client.query({
+		text: 'UPDATE waypoints SET '
+			+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
+			+ 'WHERE module_id = $1 and timestamp = $2',
+		values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
+	}, error);
 	
 	
 	Proto.emit('record', true);
@@ -107,16 +105,15 @@ Proto.updateModuleList = function(changes) {
 		if (add_length > 0) {
 			for (i = 0; i < add_length; i++) {
 				var add_module = changes.add[i];
-				client.query({
+				var update_list = client.query({
 					text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
 					values: [add_module.id, add_module.name]
-				}, function (err) {
-					if (err != null) {
-						client.query({
-							text: 'INSERT INTO modules(module_id, name) values($1, $2)',
-							values: [add_module.id, add_module.name]
-						}, error);
-					}
+				}, error);
+				update_list.on('error', function () {
+					client.query({
+						text: 'INSERT INTO modules(module_id, name) values($1, $2)',
+						values: [add_module.id, add_module.name]
+					}, error);
 				});
 			}
 		}
@@ -154,15 +151,15 @@ Proto.getModuleList = function(request) {
 	
 	var query_modules = client.query({
 		text: 'SELECT * FROM modules'
-	}, error);
+	}, error));
 	
-	query_modules.on('row', function (row) {
-		list.push(row)
-	}, error);
-	query_modules.on('end', function() {
+	query_modules.on('row', function (row, result) {
+		result.addRow(row);
+	}, error));
+	query_modules.on('end', function(result) {
 		console.info('[database]'.grey, 'found', list == undefined ? '0' : list.length, 'in track modules list');
-		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': list});
-	});
+		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': result.rows});
+	}, error));
 }
 
 Proto.query = function(request) {
@@ -177,8 +174,7 @@ Proto.query = function(request) {
 	var begin = request.begin,
 		end = request.end,
 		module_id = request.module_id,
-		client_id = request.socket_id,
-		count = 0;
+		client_id = request.socket_id;
 	console.log('[database]'.grey, 'Query', module_id, begin, '..', end);
 	/*** execute query ***/
 
@@ -187,12 +183,11 @@ Proto.query = function(request) {
 		values: [module_id, begin, end]
 	}, error);
 	query_waypoints.on('row', function (row) {
-		count++;
 		Proto.emit('result', {'socket_id': client_id, 'result': row});
 	});
-	query_waypoints.on('end', function() {
-		console.log('[database]'.grey, 'query complete, found', count);
-		Proto.emit('end', {'socket_id': client_id, 'count': count});
+	query_waypoints.on('end', function(result) {
+		console.log('[database]'.grey, 'query complete, found', result.rowCount);
+		Proto.emit('end', {'socket_id': client_id, 'count': result.rowCount});
 	});
 }
 
