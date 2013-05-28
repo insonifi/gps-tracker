@@ -482,7 +482,7 @@
 							time = new Date(waypoint.getAttribute('timestamp'))
 							path.push(new google.maps.LatLng(waypoint.getAttribute('lat'), waypoint.getAttribute('long')))
 							waypoint = waypoint.nextSibling;
-						} while(time <= stop_time)
+						} while(time <= stop)
 						hpath.setPath(path);
 						hpath.setVisible(true);
 					},
