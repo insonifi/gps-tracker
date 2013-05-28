@@ -476,8 +476,7 @@
 					},
 					showTripHistory: function (start, stop) {
 						var path = [],
-							waypoint = document.getElementById(start),
-							stop_time = new Date(stop);
+							waypoint = document.getElementById(start.toISOString());
 				
 						do {
 							time = new Date(waypoint.getAttribute('timestamp'))
