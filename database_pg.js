@@ -18,6 +18,7 @@ var error = function (err) {
 
 var cleanup = function () {
 	//delete expired records if any
+	console.log('[database]'.grey, 'cleaning up');
 	client.query({
 		text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\'::interval)',
 		values: [expire_yr]
@@ -30,7 +31,7 @@ client.connect(function (err) {
 			error(err);
 			return;
 		}
-		console.log('[database]'.grey, 'connected to database');
+		console.log('[database]'.grey, 'connected to database'.green);
 		
 		//create waypoints table if doesn't exists
 		client.query({
