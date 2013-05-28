@@ -93,7 +93,7 @@ io.sockets.on('connection', function (socket) {
 	socket_session[socket.id] = socket;
 	global_socket.emit('handshake', { welcome: 'GPS Tracker 0.1' });
 	global_socket.on('handshake', function (message) {
-		console.log('[socket]'.grey, message.welcome, 'connected');
+		console.log('[socket]'.grey, message.welcome, 'connected'.green);
 	});
 	global_socket.on('disconnect', function () {
 		console.log('[socket]'.grey, 'socket disconnected');
@@ -111,7 +111,7 @@ io.sockets.on('connection', function (socket) {
 //update tracklist
 	global_socket.on('update-modulelist', function (changes) {
 		if (changes.hash == auth.hash) {
-			console.log('[socket]'.grey, 'update accepted');
+			console.log('[socket]'.grey, 'update accepted'.green);
 			database.updateModuleList(changes);
 		}
 	});

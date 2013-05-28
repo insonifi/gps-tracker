@@ -1,18 +1,18 @@
 var EventEmitter = require('events').EventEmitter;
-var Proto = new EventEmitter;
-var googleApi = require('./google_api');
+var Proto = new EventEmitter();
+var mapApi = require('./map_api');
 var database = require('./database_pg');
 var nmea = require('./nmea');
 var queue = [];
 
-googleApi.on('address', function (gps_msg) {
+mapApi.on('address', function (gps_msg) {
 	database.addRecord(gps_msg);
 	Proto.emit('send-update', gps_msg);
 });
 
 Proto.notProcessing = true;
-Proto.add = function (input) {
-	queue.push(input);
+Proto.add = function (string) {
+	queue.push(string);
 	/* initiate processing immediately
 	*  only if processing is not in progress,
 	*  otherwise just add message to the queue.
@@ -38,12 +38,12 @@ Proto.on('next', function () {
 		var gps_msg = nmea.parse(string.slice(id.length));
 		if (gps_msg.isValid) {
 			gps_msg.module_id = id;
-			googleApi.addressLookup(gps_msg);
+			mapApi.addressLookup(gps_msg);
 		}
 		//initiate next message processing with a delay
 		var delay = 300 + Math.random() * 1000;//introduce some interval to avoid OVER_QUERY_LIMIT
 		setTimeout(function () {
-			console.log('[queue]'.grey, 'process next', (new Date).toISOString());
+			console.log('[queue]'.grey, 'process next', (new Date).toTimeString().white);
 			Proto.emit('next');
 		}, delay);
 	} else {
