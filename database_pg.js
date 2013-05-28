@@ -10,11 +10,19 @@ var colors = require('colors'),
 	
 console.log('[database]'.grey, 'connecting to'.grey, db_uri);
 	
-function error(err) {
+var error = function (err) {
         if (err) {
 			console.warn('[database]'.grey, err.message.red);
 		} 
  }
+
+var cleanup = function () {
+	//delete expired records if any
+	client.query({
+		text: 'DELETE waypoints WHERE timestamp (now() - \'$1 years\'::interval)',
+		values: [expire_yr]
+	}, error);
+}
 
 //connect to Postgres
 client.connect(function (err) {
@@ -44,6 +52,8 @@ client.connect(function (err) {
 		}, error);
 		Proto.ready = true;
 		Proto.emit('connected');
+		//start clenup service to remove old data regularly (24h)
+		setInterval(cleanup, 3600 * 24);
 });
 
 
@@ -66,13 +76,21 @@ Proto.addRecord = function(gps_msg) {
 			+ '(module_id, timestamp, address, lat, long, kph, track, magv) '
 			+ 'values($1, $2, $3, $4, $5, $6, $7, $8)',
 		values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
-	}, error);
+	}, function (err) {
+		if (err != null) {
+			client.query({
+				text: 'UPDATE waypoints SET '
+					+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
+					+ 'WHERE module_id = $1 and timestamp = $2'
+					+ 'values($1, $2, $3, $4, $5, $6, $7, $8)',
+				values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
+			}, error);
+		}
+	});
+	
+	
 	Proto.emit('record', true);
-	//delete expired records if any
-	client.query({
-		text: 'DELETE waypoints WHERE timestamp (now() - \'$1 years\'::interval)',
-		values: [expire_yr]
-	}, error);
+	
 }
 
 Proto.updateModuleList = function(changes) {
@@ -92,11 +110,14 @@ Proto.updateModuleList = function(changes) {
 				client.query({
 					text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
 					values: [add_module.id, add_module.name]
-				}, error);
-				client.query({
-					text: 'INSERT INTO modules(module_id, name) values($1, $2)',
-					values: [add_module.id, add_module.name]
-				}, error);
+				}, function (err) {
+					if (err != null) {
+						client.query({
+							text: 'INSERT INTO modules(module_id, name) values($1, $2)',
+							values: [add_module.id, add_module.name]
+						}, error);
+					}
+				});
 			}
 		}
 		var rm_length = changes.remove.length;
