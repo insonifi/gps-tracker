@@ -300,7 +300,7 @@
 						if(calcTime > threshold) {
 							if (start != last) {
 								routesCount++
-								trips.appendChild(core.tripRow(start.toISOString(), last.toISOString(), distance));
+								trips.appendChild(core.tripRow(start, last, distance));
 							};
 							start = undefined;
 							last = undefined;
