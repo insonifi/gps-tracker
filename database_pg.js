@@ -112,7 +112,8 @@ Proto.updateModuleList = function(changes) {
 					text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
 					values: [add_module.id, add_module.name]
 				}, error);
-				update_list.on('error', function () {
+				update_list.on('error', function (err) {
+					console.log(err);
 					client.query({
 						text: 'INSERT INTO modules(module_id, name) values($1, $2)',
 						values: [add_module.id, add_module.name]
@@ -147,8 +148,7 @@ Proto.getModuleList = function(request) {
 		return;
 	}
 	var dst = request.client,
-		client_id = request.socket_id,
-		list = [];
+		client_id = request.socket_id;
 
 	console.info('[database]'.grey, 'request module list');
 	
@@ -156,11 +156,13 @@ Proto.getModuleList = function(request) {
 		text: 'SELECT * FROM modules'
 	}, error);
 	
+	/*
 	query_modules.on('row', function (row, result) {
 		result.addRow(row);
 	}, error);
+	*/
 	query_modules.on('end', function(result) {
-		console.info('[database]'.grey, 'found', list == undefined ? '0' : result.rows.length, 'in track modules list');
+		console.info('[database]'.grey, 'found', result.rows.length, 'in track modules list');
 		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': result.rows});
 	}, error);
 }
