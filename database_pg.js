@@ -77,13 +77,17 @@ Proto.addRecord = function(gps_msg) {
 			+ '(module_id, timestamp, address, lat, long, kph, track, magv) '
 			+ 'values($1, $2, $3, $4, $5, $6, $7, $8)',
 		values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
-	});
-	var update = client.query({
-		text: 'UPDATE waypoints SET '
-			+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
-			+ 'WHERE module_id = $1 and timestamp = $2',
-		values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
-	}, error);
+	}, function (err) {
+			if (err) {
+				var update = client.query({
+					text: 'UPDATE waypoints SET '
+						+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
+						+ 'WHERE module_id = $1 and timestamp = $2',
+					values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
+				}, error);
+			}
+		}
+	);
 	/*update.on('end', function () {
 			Proto.emit('record', true);
 		});	
