@@ -46,7 +46,7 @@ exports.parse = function (input) {
 			data[0].slice(0,2),
 			data[0].slice(2,4),
 			data[0].slice(4,6)
-		))).toISOString();//.valueOf()//store date as integer	//.toUTCString();
+		))).toISOString();//.valueOf()//store date as integer
 		//nmea.isValid = data[1] == 'A';
 		nmea.lat = ((((data[2] | 0) / 100) | 0) + (parseFloat(data[2]) % 100) * 0.0166666666667).toFixed(6);
 		if (data[3] == 'S') nmea.lat = -nmea.lat;
@@ -54,9 +54,12 @@ exports.parse = function (input) {
 		if (data[5] == 'W') nmea.long = -nmea.long;
 		nmea.kph = (data[6] * 1.8519993258722454).toFixed(2);
 		nmea.track = data[7];
-		//nmea.timestamp = new Date();
 		nmea.magv = data[9];
 		nmea.isValid = true;
+		//check that GPS time is valid
+		if (data[0] == '000000' && data[8] == '000000') {
+			nmea.isValid = false;
+		}
 		return nmea;
 	}
 	return {text: 'no parser for ' + code, isValid: false}; 
