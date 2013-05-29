@@ -15,7 +15,7 @@
 		<link type="text/css" href="./strike4/additions.css" rel="stylesheet" />
 		<script>
 			var threshold = 5 * 60 * 1000 //5min  -- threshold to distinguish trips
-			var socket = io.connect('http://' + document.domain);
+			var socket = io.connect('http://' + document.domain + ':8000');
 			(function () {
 				socket.on('handshake', function (data) {
 					console.log('[connected]', data.welcome);
