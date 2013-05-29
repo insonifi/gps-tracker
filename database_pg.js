@@ -23,6 +23,7 @@ var cleanup = function () {
 		text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\')::interval',
 		values: [expire_yr]
 	}, error);
+	client.query({text: 'VACUUM'}, error);
 }
 
 //connect to Postgres
@@ -196,8 +197,8 @@ Proto.query = function(request) {
 		Proto.emit('result', {'socket_id': client_id, 'result': row});
 	});
 	query_waypoints.on('end', function(result) {
-		console.log('[database]'.grey, 'query complete, found', result.rowCount);
-		Proto.emit('end', {'socket_id': client_id, 'count': result.rowCount});
+		console.log('[database]'.grey, 'query complete, found', result.rows.length);
+		Proto.emit('end', {'socket_id': client_id, 'count': result.rows.length});
 	});
 }
 
