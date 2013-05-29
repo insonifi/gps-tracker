@@ -109,14 +109,17 @@ Proto.updateModuleList = function(changes) {
 		if (add_length > 0) {
 			for (i = 0; i < add_length; i++) {
 				var add_module = changes.add[i];
-				var update_list = client.query({
-					text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
-					values: [add_module.id, add_module.name]
-				}, error);
 				var insert_list = client.query({
 					text: 'INSERT INTO modules(module_id, name) values($1, $2)',
 					values: [add_module.id, add_module.name]
-				}, error);
+				}, function (err) {
+					if (err) {
+						var update_list = client.query({
+							text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
+							values: [add_module.id, add_module.name]
+						}, error);
+					}
+				});
 			}
 		}
 		var rm_length = changes.remove.length;
