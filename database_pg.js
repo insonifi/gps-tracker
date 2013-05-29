@@ -111,7 +111,7 @@ Proto.updateModuleList = function(changes) {
 				var update_list = client.query({
 					text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
 					values: [add_module.id, add_module.name]
-				}, error);
+				});
 				update_list.on('error', function (err) {
 					console.log(err);
 					client.query({
