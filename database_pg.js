@@ -78,20 +78,21 @@ Proto.addRecord = function(gps_msg) {
 			+ 'values($1, $2, $3, $4, $5, $6, $7, $8)',
 		values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
 	});
-	insert.on('error', function () {
-		var update = client.query({
-			text: 'UPDATE waypoints SET '
-				+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
-				+ 'WHERE module_id = $1 and timestamp = $2',
-			values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
-		}, error);
-		update.on('end', function () {
+	var update = client.query({
+		text: 'UPDATE waypoints SET '
+			+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
+			+ 'WHERE module_id = $1 and timestamp = $2',
+		values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
+	}, error);
+	/*update.on('end', function () {
 			Proto.emit('record', true);
 		});	
 	});
 	insert.on('end', function () {
 		Proto.emit('record', true);
-	});	
+	});
+	*/	
+	Proto.emit('record', true);
 }
 
 Proto.updateModuleList = function(changes) {
@@ -111,14 +112,11 @@ Proto.updateModuleList = function(changes) {
 				var update_list = client.query({
 					text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
 					values: [add_module.id, add_module.name]
-				});
-				update_list.on('error', function (err) {
-					console.log(err);
-					client.query({
-						text: 'INSERT INTO modules(module_id, name) values($1, $2)',
-						values: [add_module.id, add_module.name]
-					}, error);
-				});
+				}, error);
+				var insert_list = client.query({
+					text: 'INSERT INTO modules(module_id, name) values($1, $2)',
+					values: [add_module.id, add_module.name]
+				}, error);
 			}
 		}
 		var rm_length = changes.remove.length;
