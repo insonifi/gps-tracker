@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+'use strict';
 var net = require('net');
 //var track = require('./kml_track');
 var colors = require('colors'),
@@ -12,7 +13,8 @@ var colors = require('colors'),
 	client_socket,
 	auth = require('./pwdhash'),
 	hash = null,
-	vId = null;
+	vId = null,
+	i;
 /************************ Update tracking list ************************/
 //refresh tracked id list
 database.on('connected', function () {
@@ -24,8 +26,8 @@ database.on('modulelist-server', function (response) {
 		length = list.length;
 	queue.isTracked = {};
 	console.log('[GPS]'.grey, 'updating tracked modules list:', list);
-	if (list == undefined) return;
-	for (var i = 0; i < length; i++) {
+	if (!list) {return; }
+	for (i = 0; i < length; i + 1) {
 		queue.isTracked[list[i].module_id] = true;
 	}
 });
@@ -35,13 +37,13 @@ var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 var port = process.env.OPENSHIFT_NODEJS_PORT || 80;
 server.listen(port, ip);
 app.on('error', function (err) {
-    if (err.code == 'EADDRINUSE') {
-        logger("[express]".grey, "Address in use, trying again...");
+    if (err.code === 'EADDRINUSE') {
+        console.log("[express]".grey, "Address in use, trying again...");
         setTimeout(function () {
             app.close();
             app.listen(port, ip);
         }, 1000);
-    } else if (e.code == 'EACCES') {
+    } else if (err.code === 'EACCES') {
         console.log("[express".grey, "You don't have permissions to bind to this address. Try running via sudo.");
     } else {
         console.log("[express]".grey, err);
@@ -54,12 +56,12 @@ app.use(function (req, res, next) {
 	next();
   //res.sendfile(__dirname + '/index.html');
 });
-app.use(function(req, res, next){
+app.use(function (req, res, next) {
 	//res.send(404, 'Sorry cant find that!');
 	res.status(404).sendfile('notfound.html');
 });
-app.get('/', function(req, res){
-  res.sendfile(__dirname + '/index.html');
+app.get('/', function (req, res) {
+	res.sendfile(__dirname + '/index.html');
 });
 /*********************** Event pool with Socket.IO ****************************/
 io.enable('browser client minification');  // send minified client
@@ -72,22 +74,21 @@ io.set('log level', 1);                    // reduce logging
 // default port)
 io.set('transports', [
     'websocket'
-  , 'flashsocket'
-  , 'htmlfile'
-  , 'xhr-polling'
-  , 'jsonp-polling'
+  /*, 'htmlfile'
+   *, 'xhr-polling'
+   *, 'jsonp-polling' */
 ]);
 /********************/
 //clock
 setInterval(function () {
-	io.sockets.emit('clock', (new Date).valueOf());
+	io.sockets.emit('clock', (new Date()).valueOf());
 }, 60000);
 queue.on('send-update', function (data) {
 	io.sockets.emit('update-waypoint', data);
 });
 io.sockets.on('connection', function (socket) {
-	if (socket.id in socket_session) {
-		return
+	if (socket_session[socket.id]) {
+		return;
 	}
 	var global_socket = socket;
 	socket_session[socket.id] = socket;
@@ -98,7 +99,7 @@ io.sockets.on('connection', function (socket) {
 	global_socket.on('disconnect', function () {
 		console.log('[socket]'.grey, 'socket disconnected');
 		delete socket_session[this.id];
-});
+	});
 //received trackdata
 	global_socket.on('gps-message', function (message) {
 		queue.add(message);
@@ -110,7 +111,7 @@ io.sockets.on('connection', function (socket) {
 
 //update tracklist
 	global_socket.on('update-modulelist', function (changes) {
-		if (changes.hash == auth.hash) {
+		if (changes.hash === auth.hash) {
 			console.log('[socket]'.grey, 'update accepted'.green);
 			database.updateModuleList(changes);
 		}
@@ -122,11 +123,11 @@ io.sockets.on('connection', function (socket) {
 
 });
 
-database.on('result', function(response) {
+database.on('result', function (response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('query-waypoint', response.result);
 });
-database.on('end', function(response) {
+database.on('end', function (response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('query-end', response.count);
 });

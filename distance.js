@@ -16,7 +16,7 @@
  * @returns (Number} distance in metres between points
  */
 
-calculateDistance = function (coordsA, coordsB) {
+var calculateDistance = function (coordsA, coordsB) {
     Number.prototype.toRad = function() {
         return this * Math.PI / 180;
     }

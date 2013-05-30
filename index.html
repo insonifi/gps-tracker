@@ -347,7 +347,7 @@
 					
 					var cell_distance = trip.insertCell(-1);
 					cell_distance.classList.add('q-time');
-					cell_distance.textContent= (distance / 1000).toFixed(2) + 'km';
+					cell_distance.textContent= (distance / 10000).toFixed(2) + 'km';
 					
 					trip.onmouseover = function () {
 						core.showSelect(trip);
