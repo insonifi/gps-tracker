@@ -28,6 +28,26 @@ var colors = require('colors'),
 			values: [expire_yr]
 		}, error);
 		client.query({text: 'VACUUM'}, error);
+	},
+	init_db = function () {
+		//create waypoints table if doesn't exists
+		client.query({
+			text: 'CREATE TABLE waypoints ('
+				+ 'module_id	varchar(20),'
+				+ 'timestamp	timestamp,'
+				+ 'address		varchar(100),'
+				+ 'lat		real,'
+				+ 'long		real,'
+				+ 'kph		real,'
+				+ 'track	smallint,'
+				+ 'magv		smallint,'
+				+ 'PRIMARY KEY (module_id, timestamp))'
+		}, error);
+		client.query({
+			text: 'CREATE TABLE modules ('
+				+ 'module_id	varchar(20) PRIMARY KEY,'
+				+ 'name		varchar(20))'
+		}, error);
 	};
 
 client.on('drain', function (client) {
@@ -186,25 +206,7 @@ client.connect(function (err) {
 		return;
 	}
 	console.log('[database]'.grey, 'connection to database is', 'OK'.green);
-
-	//create waypoints table if doesn't exists
-	client.query({
-		text: 'CREATE TABLE waypoints ('
-			+ 'module_id	varchar(20),'
-			+ 'timestamp	timestamp,'
-			+ 'address		varchar(100),'
-			+ 'lat		real,'
-			+ 'long		real,'
-			+ 'kph		real,'
-			+ 'track	smallint,'
-			+ 'magv		smallint,'
-			+ 'PRIMARY KEY (module_id, timestamp))'
-	}, error);
-	client.query({
-		text: 'CREATE TABLE modules ('
-			+ 'module_id	varchar(20) PRIMARY KEY,'
-			+ 'name		varchar(20))'
-	}, error);
+	init_db();
 	Proto.ready = true;
 	Proto.emit('connected');
 	//start clenup service to remove old data regularly (24h)
