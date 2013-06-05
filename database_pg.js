@@ -2,7 +2,6 @@
 var colors = require('colors'),
 	pg = require('pg'),
 	db_uri = (process.env.OPENSHIFT_POSTGRESQL_DB_URL || 'tcp://127.0.0.1:1234') + '/' + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
-	client = new pg.Client(db_uri),
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter(),
 	expire_yr = 2,
@@ -20,40 +19,51 @@ var colors = require('colors'),
 			}, 2 * 1000); //retry in 2 sec;
 			return;
 		}
-		client.connect(error);
-		//delete expired records if any
-		console.log('[database]'.grey, 'cleaning up');
-		client.query({
-			text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\')::interval',
-			values: [expire_yr]
-		}, error);
-		client.query({text: 'VACUUM'}, error);
+		pg.connect(db_uri, function (err, client) {
+			if (err) {
+				error(err);
+				return;
+			}
+			client.on('drain', client.end.bind(client));
+			//delete expired records if any
+			console.log('[database]'.grey, 'cleaning up');
+			client.query({
+				text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\')::interval',
+				values: [expire_yr]
+			}, error);
+			client.query({text: 'VACUUM'}, error);
+		});
 	},
 	init_db = function () {
-		//create waypoints table if doesn't exists
-		client.query({
-			text: 'CREATE TABLE waypoints ('
-				+ 'module_id	varchar(20),'
-				+ 'timestamp	timestamp,'
-				+ 'address		varchar(100),'
-				+ 'lat		real,'
-				+ 'long		real,'
-				+ 'kph		real,'
-				+ 'track	smallint,'
-				+ 'magv		smallint,'
-				+ 'PRIMARY KEY (module_id, timestamp))'
-		}, error);
-		client.query({
-			text: 'CREATE TABLE modules ('
-				+ 'module_id	varchar(20) PRIMARY KEY,'
-				+ 'name		varchar(20))'
-		}, error);
+		pg.connect(db_uri, function (err, client) {
+			if (err) {
+				error(err);
+				return;
+			}
+			client.on('drain', client.end.bind(client));
+			console.log('[database]'.grey, 'connection to database is', 'OK'.green);
+			//create waypoints table if doesn't exists
+			client.query({
+				text: 'CREATE TABLE waypoints ('
+					+ 'module_id	varchar(20),'
+					+ 'timestamp	timestamp,'
+					+ 'address		varchar(100),'
+					+ 'lat		real,'
+					+ 'long		real,'
+					+ 'kph		real,'
+					+ 'track	smallint,'
+					+ 'magv		smallint,'
+					+ 'PRIMARY KEY (module_id, timestamp))'
+			}, error);
+			client.query({
+				text: 'CREATE TABLE modules ('
+					+ 'module_id	varchar(20) PRIMARY KEY,'
+					+ 'name		varchar(20))'
+			}, error);
+		});
+		Proto.ready = true;
+		Proto.emit('connected');
 	};
-
-client.on('drain', function (client) {
-	client.end.bind(client);
-	Proto.ready = false;
-});
 
 pg.on('error', function (err) {
 	error(err);
@@ -62,14 +72,15 @@ pg.on('error', function (err) {
 Proto.ready = false;
 
 Proto.addRecord = function (gps_msg) {
-	if (!Proto.ready) {
+	/*if (!Proto.ready) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
 			Proto.addRecord(gps_msg);
 		}, 2 * 1000); //retry in 2 sec;
 		return;
-	}
-	client.connect(function (err) {
+	}*/
+	pg.connect(db_uri, function (err, client) {
+		client.on('drain', client.end.bind(client));
 		if (err) {
 			error(err);
 			return;
@@ -96,19 +107,20 @@ Proto.addRecord = function (gps_msg) {
 };
 
 Proto.updateModuleList = function (changes) {
-	if (!Proto.ready) {
+	/*if (!Proto.ready) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
 			Proto.updateModuleList(changes);
 		}, 2 * 1000); //retry in 2 sec;
 		return;
-	}
-	client.connect(function (err) {
+	}*/
+	pg.connect(db_uri, function (err, client) {
+		client.on('drain', client.end.bind(client));
 		if (err) {
 			error(err);
 			return;
 		}
-	var add_length,
+		var add_length,
 			add_module,
 			rm_length,
 			rm_module,
@@ -152,14 +164,15 @@ Proto.updateModuleList = function (changes) {
 	});
 };
 Proto.getModuleList = function (request) {
-	if (!Proto.ready) {
+	/*if (!Proto.ready) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
 			Proto.getModuleList(request);
 		}, 2 * 1000); //retry in 2 sec;
 		return;
-	}
-	client.connect(function (err) {
+	}*/
+	pg.connect(db_uri, function (err, client) {
+		client.on('drain', client.end.bind(client));
 		if (err) {
 			error(err);
 			return;
@@ -184,14 +197,15 @@ Proto.getModuleList = function (request) {
 	});
 };
 Proto.query = function (request) {
-	if (!Proto.ready) {
+	/*if (!Proto.ready) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
 			Proto.query(request);
 		}, 2 * 1000); //retry in 2 sec;
 		return;
-	}
-	client.client.connect(function (err) {
+	}*/
+	pg.connect(db_uri, function (err, client) {
+		client.on('drain', client.end.bind(client));
 		if (err) {
 			error(err);
 			return;
@@ -218,26 +232,15 @@ Proto.query = function (request) {
 	});
 };
 
-console.log('[database]'.grey, 'connecting to'.grey, db_uri);
-/** initial connect to Postgres */
-client.connect(function (err) {
-	if (err) {
-		error(err);
-		return;
-	}
-	console.log('[database]'.grey, 'connection to database is', 'OK'.green);
-	init_db();
-	Proto.ready = true;
-	Proto.emit('connected');
-	//start clenup service to remove old data regularly (24h)
-	setInterval(cleanup, 1000 * 3600 * 24);
-});
-
-
 Proto.on('record', function () {
 	console.info('[database]'.grey, 'record added');
 });
 
+console.log('[database]'.grey, 'connecting to'.grey, db_uri);
+/** initial connect to Postgres */
+init_db();
+//start clenup service to remove old data regularly (24h)
+setInterval(cleanup, 1000 * 3600 * 24);
 
 module.exports = Proto;
 
