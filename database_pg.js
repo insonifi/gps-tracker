@@ -13,6 +13,13 @@ var colors = require('colors'),
 		}
 	},
 	cleanup = function () {
+		if (!Proto.ready) {
+			console.log('[database]'.grey, 'not ready yet'.red);
+			setTimeout(function () {
+				cleanup();
+			}, 2 * 1000); //retry in 2 sec;
+			return;
+		}
 		client.connect(err);
 		//delete expired records if any
 		console.log('[database]'.grey, 'cleaning up');
@@ -23,8 +30,15 @@ var colors = require('colors'),
 		client.query({text: 'VACUUM'}, error);
 	};
 
-client.on('drain', client.end.bind(client));
+client.on('drain', function (client) {
+	client.end.bind(client);
+	Proto.ready = false;
+});
 
+pg.on('error', function (err) {
+	error(err);
+	Proto.ready = false;
+});
 Proto.ready = false;
 
 Proto.addRecord = function (gps_msg) {
