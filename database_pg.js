@@ -1,7 +1,7 @@
 'use strict';
 var colors = require('colors'),
 	pg = require('pg'),
-	db_uri = (process.env.OPENSHIFT_POSTGRESQL_DB_URL || 'tcp://127.0.0.1:1234/') + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
+	db_uri = (process.env.OPENSHIFT_POSTGRESQL_DB_URL || 'tcp://127.0.0.1:1234') + '/' + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
 	client = new pg.Client(db_uri),
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter(),
