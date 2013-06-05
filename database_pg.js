@@ -159,7 +159,7 @@ Proto.getModuleList = function (request) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
-	client.client.connect(function (err) {
+	client.connect(function (err) {
 		if (err) {
 			error(err);
 			return;
