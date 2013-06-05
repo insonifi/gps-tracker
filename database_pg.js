@@ -13,6 +13,7 @@ var colors = require('colors'),
 		}
 	},
 	cleanup = function () {
+		client.connect();
 		//delete expired records if any
 		console.log('[database]'.grey, 'cleaning up');
 		client.query({
@@ -21,6 +22,8 @@ var colors = require('colors'),
 		}, error);
 		client.query({text: 'VACUUM'}, error);
 	};
+
+client.on('drain', client.end.bind(client));
 
 Proto.ready = false;
 
@@ -32,6 +35,7 @@ Proto.addRecord = function (gps_msg) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
+	client.connect();
 	var g = gps_msg,
 	//insert new waypoint
 		insert = client.query({
@@ -60,6 +64,7 @@ Proto.updateModuleList = function (changes) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
+	client.connect();
 	var add_length,
 		add_module,
 		rm_length,
@@ -110,6 +115,7 @@ Proto.getModuleList = function (request) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
+	client.connect();
 	var dst = request.client,
 		client_id = request.socket_id,
 		query_modules;
@@ -136,6 +142,7 @@ Proto.query = function (request) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
+	client.connect();
 	/*** prepare query parameters ***/
 	var begin = request.begin,
 		end = request.end,
@@ -158,7 +165,7 @@ Proto.query = function (request) {
 };
 
 console.log('[database]'.grey, 'connecting to'.grey, db_uri);
-/** connect to Postgres */
+/** initial connect to Postgres */
 client.connect(function (err) {
 	if (err) {
 		error(err);
