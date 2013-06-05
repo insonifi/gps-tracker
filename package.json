@@ -14,7 +14,6 @@
     "express": "",
     "colors": "",
     "socket.io": "",
-    "colors": "",
     "pg": ""
   },
   "scripts": {

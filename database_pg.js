@@ -171,7 +171,7 @@ client.connect(function (err) {
 		error(err);
 		return;
 	}
-	console.log('[database]'.grey, 'connected to database'.green);
+	console.log('[database]'.grey, 'connection to database is', 'OK'.green);
 
 	//create waypoints table if doesn't exists
 	client.query({
