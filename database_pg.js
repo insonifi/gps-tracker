@@ -13,7 +13,7 @@ var colors = require('colors'),
 		}
 	},
 	cleanup = function () {
-		client.connect();
+		client.connect(err);
 		//delete expired records if any
 		console.log('[database]'.grey, 'cleaning up');
 		client.query({
@@ -35,7 +35,7 @@ Proto.addRecord = function (gps_msg) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
-	client.connect();
+	client.connect(err);
 	var g = gps_msg,
 	//insert new waypoint
 		insert = client.query({
@@ -64,7 +64,7 @@ Proto.updateModuleList = function (changes) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
-	client.connect();
+	client.connect(err);
 	var add_length,
 		add_module,
 		rm_length,
@@ -115,7 +115,7 @@ Proto.getModuleList = function (request) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
-	client.connect();
+	client.connect(err);
 	var dst = request.client,
 		client_id = request.socket_id,
 		query_modules;
@@ -142,7 +142,7 @@ Proto.query = function (request) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
-	client.connect();
+	client.connect(err);
 	/*** prepare query parameters ***/
 	var begin = request.begin,
 		end = request.end,
