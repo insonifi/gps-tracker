@@ -12,13 +12,13 @@ var colors = require('colors'),
 		}
 	},
 	cleanup = function () {
-		if (!Proto.ready) {
+		/*if (!Proto.ready) {
 			console.log('[database]'.grey, 'not ready yet'.red);
 			setTimeout(function () {
 				cleanup();
 			}, 2 * 1000); //retry in 2 sec;
 			return;
-		}
+		}*/
 		pg.connect(db_uri, function (err, client) {
 			if (err) {
 				error(err);
