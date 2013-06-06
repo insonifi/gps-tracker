@@ -8,7 +8,7 @@ var http = require('http'),
 			component,
 			components = lookup.results[0].address_components,
 			components_len = components.length;
-		for (i = 0; i < components_len; i + 1) {
+		for (i = 0; i < components_len; i += 1) {
 			component = components[i];
 			if (component.types.indexOf('route') !== -1) {address.street = component.long_name; }
 			if (component.types.indexOf('street_number') !== -1) {address.number = component.long_name; }

@@ -1,18 +1,29 @@
 'use strict';
 var colors = require('colors'),
 	pg = require('pg'),
-	db_uri = (process.env.OPENSHIFT_POSTGRESQL_DB_URL || 'tcp://127.0.0.1:1234') + '/' + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
+	db_uri = (process.env.OPENSHIFT_POSTGRESQL_DB_URL || 'pg://localhost') + '/' + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter(),
 	expire_yr = 2,
 	i,
+	connect = function () {
+		pg.connect(function (err, client) {
+			if (err) {
+				console.log('[database]'.grey, 'reconnect'.red);
+				setTimeout(function () {
+					connect();
+				}, 2 * 1000); //retry in 2 sec;
+			}
+			Proto.client = client;
+		});
+	},
 	error = function (err) {
 		if (err) {
 			console.warn('[database]'.grey, err.message.red);
 		}
 	},
 	cleanup = function () {
-		if (!Proto.ready) {
+		if (!Proto.client) {
 			console.log('[database]'.grey, 'not ready yet'.red);
 			setTimeout(function () {
 				cleanup();
@@ -21,14 +32,14 @@ var colors = require('colors'),
 		}
 		//delete expired records if any
 		console.log('[database]'.grey, 'cleaning up');
-		client.query({
+		Proto.client.query({
 			text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\')::interval',
 			values: [expire_yr]
 		}, error);
-		client.query({text: 'VACUUM'}, error);
+		Proto.client.query({text: 'VACUUM'}, error);
 	},
 	init_db = function () {
-		if (!Proto.ready) {
+		if (!Proto.client) {
 			console.log('[database]'.grey, 'not ready yet'.red);
 			setTimeout(function () {
 				init_db();
@@ -37,7 +48,7 @@ var colors = require('colors'),
 		}
 		console.log('[database]'.grey, 'connection to database is', 'OK'.green);
 		//create waypoints table if doesn't exists
-		client.query({
+		Proto.client.query({
 			text: 'CREATE TABLE waypoints ('
 				+ 'module_id	varchar(20),'
 				+ 'timestamp	timestamp,'
@@ -49,7 +60,7 @@ var colors = require('colors'),
 				+ 'magv		smallint,'
 				+ 'PRIMARY KEY (module_id, timestamp))'
 		}, error);
-		client.query({
+		Proto.client.query({
 			text: 'CREATE TABLE modules ('
 				+ 'module_id	varchar(20) PRIMARY KEY,'
 				+ 'name		varchar(20))'
@@ -61,11 +72,12 @@ var colors = require('colors'),
 pg.on('error', function (err) {
 	error(err);
 	Proto.ready = false;
+	connect();
 });
 Proto.ready = false;
 
 Proto.addRecord = function (gps_msg) {
-	if (!Proto.ready) {
+	if (!Proto.client) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
 			Proto.addRecord(gps_msg);
@@ -74,14 +86,14 @@ Proto.addRecord = function (gps_msg) {
 	}
 	var g = gps_msg,
 	//insert new waypoint
-		insert = client.query({
+		insert = Proto.client.query({
 			text: 'INSERT INTO waypoints '
 				+ '(module_id, timestamp, address, lat, long, kph, track, magv) '
 				+ 'values($1, $2, $3, $4, $5, $6, $7, $8)',
 			values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
 		}, function (err) {
 			if (err) {
-				var update = client.query({
+				var update = Proto.client.query({
 					text: 'UPDATE waypoints SET '
 						+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
 						+ 'WHERE module_id = $1 and timestamp = $2',
@@ -93,7 +105,7 @@ Proto.addRecord = function (gps_msg) {
 };
 
 Proto.updateModuleList = function (changes) {
-	if (!Proto.ready) {
+	if (!Proto.client) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
 			Proto.updateModuleList(changes);
@@ -110,14 +122,14 @@ Proto.updateModuleList = function (changes) {
 		console.log('[database]'.grey, 'add', changes.add, 'remove', changes.remove);
 		add_length = changes.add.length;
 		if (add_length > 0) {
-			for (i = 0; i < add_length; i + 1) {
+			for (i = 0; i < add_length; i += 1) {
 				add_module = changes.add[i];
-				insert_list = client.query({
+				insert_list = Proto.client.query({
 					text: 'INSERT INTO modules(module_id, name) values($1, $2)',
 					values: [add_module.id, add_module.name]
 				}, function (err) {
 					if (err) {
-						update_list = client.query({
+						update_list = Proto.client.query({
 							text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
 							values: [add_module.id, add_module.name]
 						}, error);
@@ -127,13 +139,13 @@ Proto.updateModuleList = function (changes) {
 		}
 		rm_length = changes.remove.length;
 		if (rm_length > 0) {
-			for (i = 0; i < rm_length; i + 1) {
+			for (i = 0; i < rm_length; i += 1) {
 				rm_module = changes.remove[i];
-				client.query({
+				Proto.client.query({
 					text: 'DELETE FROM waypoints WHERE module_id = $1',
 					values: [rm_module.id]
 				}, error);
-				client.query({
+				Proto.client.query({
 					text: 'DELETE FROM modules WHERE module_id = $1',
 					values: [rm_module.id]
 				}, error);
@@ -143,7 +155,7 @@ Proto.updateModuleList = function (changes) {
 	}
 };
 Proto.getModuleList = function (request) {
-	if (!Proto.ready) {
+	if (!Proto.client) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
 			Proto.getModuleList(request);
@@ -156,7 +168,7 @@ Proto.getModuleList = function (request) {
 
 	console.info('[database]'.grey, 'request module list');
 
-	query_modules = client.query({
+	query_modules = Proto.client.query({
 		text: 'SELECT * FROM modules'
 	}, error);
 	query_modules.on('end', function (result) {
@@ -165,7 +177,7 @@ Proto.getModuleList = function (request) {
 	}, error);
 };
 Proto.query = function (request) {
-	if (!Proto.ready) {
+	if (!Proto.client) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
 			Proto.query(request);
@@ -178,7 +190,7 @@ Proto.query = function (request) {
 		module_id = request.module_id,
 		client_id = request.socket_id,
 	/*** execute query ***/
-		query_waypoints = client.query({
+		query_waypoints = Proto.client.query({
 			text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp BETWEEN $2 AND $3',
 			values: [module_id, begin, end]
 		}, error);
@@ -198,7 +210,7 @@ Proto.on('record', function () {
 });
 
 /** initial connect to Postgres */
-client.connect(error);
+connect();
 console.log('[database]'.grey, 'connecting to'.grey, db_uri);
 init_db();
 //start clenup service to remove old data regularly (24h)
