@@ -7,7 +7,7 @@ function validate_nmea(input) {
 		sum = result[2],
 		i;
     if (!re.test(input)) {return; }
-    for (i = 0; i < str.length; i + 1) {
+    for (i = 0; i < str.length; i += 1) {
         checksum = checksum ^ str.charCodeAt(i);
     }
     if (checksum.toString(16) === sum) {
