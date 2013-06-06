@@ -197,8 +197,9 @@ Proto.on('record', function () {
 	console.info('[database]'.grey, 'record added');
 });
 
-console.log('[database]'.grey, 'connecting to'.grey, db_uri);
 /** initial connect to Postgres */
+client.connect(error);
+console.log('[database]'.grey, 'connecting to'.grey, db_uri);
 init_db();
 //start clenup service to remove old data regularly (24h)
 setInterval(cleanup, 1000 * 3600 * 24);
