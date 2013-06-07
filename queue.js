@@ -28,7 +28,9 @@ Proto.isTracked = {};
 Proto.on('next', function () {
 	if (queue.length > 0) {
 		var string = queue.shift(),
-			id = string.slice(0, string.indexOf('$')),
+			text = string.split('$'),
+			id = text[0],
+			gpstext = text[1],
 			gps_msg,
 			delay;
 		//do we track this module
@@ -37,7 +39,7 @@ Proto.on('next', function () {
 			return;
 		}
 		//parse GPS message
-		gps_msg = nmea.parse(string.slice(id.length));
+		gps_msg = nmea.parse(gpstext);
 		if (gps_msg.isValid) {
 			gps_msg.module_id = id;
 			mapApi.addressLookup(gps_msg);
