@@ -15,6 +15,10 @@ def checksum(line):
     return '%02x' % s
 
 def generateNmea():
+    """
+    (None) -> str
+    Return valid GPRMC message for Latvia region
+    """
     hr = '%02d' % time.gmtime().tm_hour
     min = '%02d' % time.gmtime().tm_min
     sec = '%02d' % time.gmtime().tm_sec

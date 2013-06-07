@@ -2,7 +2,7 @@
 function validate_nmea(input) {
     var checksum = 0,
 		str = input.slice(1, -3),
-		sum = input.slice(-2),
+		sum = parseInt(input.slice(-2), 16),
 		length = str.length,
 		i;
     for (i = 0; i < length; i += 1) {
