@@ -1,14 +1,12 @@
 'use strict';
 function validate_nmea(input) {
     var checksum = 0,
-		re = /\*/,
-		result = input.split('*'),
-		str = result[1],
-		sum = result[2],
+		str = input.slice(1, -3),
+		sum = input.slice(-2),
+		length = str.length,
 		i;
-    if (!re.test(input)) {return; }
-    for (i = 0; i < str.length; i += 1) {
-        checksum = checksum ^ str.charCodeAt(i);
+    for (i = 0; i < length; i += 1) {
+        checksum ^= str.charCodeAt(i);
     }
     if (checksum.toString(16) === sum) {
         return str;
