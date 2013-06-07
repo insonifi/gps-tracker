@@ -8,7 +8,7 @@ function validate_nmea(input) {
     for (i = 0; i < length; i += 1) {
         checksum ^= str.charCodeAt(i);
     }
-    if (checksum.toString(16) === sum) {
+    if (checksum === sum) {
         return str;
     } else {
 		console.log('[NMEA]', 'invalid checksum');
