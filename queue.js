@@ -16,8 +16,7 @@ Proto.add = function (string) {
 	queue.push(string);
 	/* initiate processing immediately
 	*  only if processing is not in progress,
-	*  otherwise just add message to the queue.
-	*/
+	*  otherwise just add message to the queue.*/
 	if (Proto.notProcessing) {
 		Proto.notProcessing = false;
 		Proto.emit('next');
