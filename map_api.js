@@ -3,6 +3,7 @@ var http = require('http'),
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter(),
 	i,
+	delay = 1000, /*introduce some interval to avoid OVER_QUERY_LIMIT*/
 	getAddressString = function (lookup) {
 		var address = {},
 			component,
@@ -41,6 +42,9 @@ Proto.addressLookup = function (gps_msg) {
 					console.error('[google]'.grey, response.status.green, gps_msg.address);
 				} else {
 					console.error('[google]'.grey, response.status.red);
+					setTimeout(function () {
+						Proto.addressLookup(gps_msg);
+					}, delay)
 				}
 				Proto.emit('address', gps_msg);
 			});

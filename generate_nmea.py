@@ -22,13 +22,14 @@ def generateNmea():
     hr = '%02d' % time.gmtime().tm_hour
     min = '%02d' % time.gmtime().tm_min
     sec = '%02d' % time.gmtime().tm_sec
-    x = '%03d' % randint(0, 999)
-    y = '%03d' % randint(0, 999)
+#     Generate coordinates somewhere in Latvian region.
+    x = '565%d.%03d' % (randint(2, 4), randint(0, 999))
+    y = '0240%d.%03d' % (randint(5,7), randint(0, 999))
     kph = '%03d' % randint(0, 100)
     dd = '%02d' % time.gmtime().tm_mday
     mm = '%02d' % time.gmtime().tm_mon
     yy = str(time.gmtime().tm_year)[2:]
-    nmea = 'GPRMC,{0}{1}{2},A,5653.{3},N,02405.{4},E,{5},090,{6}{7}{8},155'.format(hr, min, sec, x, y, kph, dd, mm, yy)
+    nmea = 'GPRMC,{0}{1}{2},A,{3},N,{4},E,{5},090,{6}{7}{8},155'.format(hr, min, sec, x, y, kph, dd, mm, yy)
     return '$' + nmea + '*' + checksum(nmea)
     
 
