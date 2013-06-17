@@ -27,9 +27,9 @@ Proto.isTracked = {};
 Proto.on('next', function () {
 	if (queue.length > 0) {
 		var string = queue.shift(),
-			text = string.split('$'),
-			id = text[0],
-			gpstext = text[1],
+			marker_position = string.indexOf('$'),
+			id = string.slice(0, marker_position),
+			gpstext = string.slice(marker_position),
 			gps_msg,
 			delay;
 		//do we track this module
