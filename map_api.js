@@ -19,38 +19,41 @@ var http = require('http'),
 		return (address.street === undefined ? '' : address.street)
 			+ (address.number === undefined ? '' : ' ' + address.number)
 			+ (address.locality === undefined ? '' : ', ' + address.locality);
+	},
+	addressLookup = function (temp) {
+		var lat = temp.coords.lat,
+			long = temp.coords.long,
+			options = {
+				hostname: 'maps.googleapis.com',
+				port: 80,
+				path: '/maps/api/geocode/json?latlng=' + lat + ',' + long
+					+ '&sensor=false',
+				method: 'GET'
+			},
+			data = '',
+			request = http.request(options, function (res) {
+				res.on('data', function (chunk) {
+					data += chunk;
+				});
+				res.on('end', function () {
+					var response = JSON.parse(data.toString());
+					if ('OK' === response.status) {
+						temp.coords.address = getAddressString(response);
+						Proto.emit('got-address', temp); /* return address */
+						console.error('[google]'.grey, response.status.green, temp.coords.address);
+					} else {
+						setTimeout(function () {
+							Proto.emit('lookup-address', temp); /* retry */
+						}, delay);
+						console.error('[google]'.grey, response.status.red, 'retry in', delay);
+					}
+				});
+			});
+		console.log('[google]'.grey, (options.hostname + options.path).grey);
+		request.on('error', function (err) {console.log('[google]'.grey, err.red); });
+		request.end();
 	};
 
-Proto.addressLookup = function (gps_msg) {
-	var options = {
-			hostname: 'maps.googleapis.com',
-			port: 80,
-			path: '/maps/api/geocode/json?latlng=' + gps_msg.lat + ',' + gps_msg.long
-				+ '&sensor=false',
-			method: 'GET'
-		},
-		data = '',
-		response,
-		request = http.request(options, function (res) {
-			res.on('data', function (chunk) {
-				data += chunk;
-			});
-			res.on('end', function () {
-				response = JSON.parse(data.toString());
-				if ('OK' === response.status) {
-					gps_msg.address = getAddressString(response);
-					console.error('[google]'.grey, response.status.green, gps_msg.address);
-				} else {
-					console.error('[google]'.grey, response.status.red);
-					setTimeout(function () {
-						Proto.addressLookup(gps_msg);
-					}, delay)
-				}
-				Proto.emit('address', gps_msg);
-			});
-		});
-	console.log('[google]'.grey, (options.hostname + options.path).grey);
-	request.on('error', function (err) {console.log('[google]'.grey, err.red); });
-	request.end();
-};
+Proto.on('lookup-address', addressLookup);
+
 module.exports = Proto;

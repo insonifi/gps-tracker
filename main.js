@@ -3,18 +3,47 @@
 var net = require('net');
 //var track = require('./kml_track');
 var colors = require('colors'),
-	queue = require('./queue'),
+	//queue = require('./queue'),
 	database = require('./database_pg'),
 	express = require('express'),
+	mapApi = require('./map_api'),
+	nmea = require('./nmea'),
 	app = express(),
 	server = require('http').createServer(app),
 	io = require('socket.io').listen(server),
 	socket_session = {},
 	client_socket,
 	auth = require('./pwdhash'),
-	hash = null,
-	vId = null,
-	i;
+	i,
+	ip,
+	isTracked = {},
+	port,
+	hash,
+	vId,
+	processor = function (string) {
+		var id,
+			gpstext,
+			gps_msg = {},
+			marker_position;
+		if (!string) {
+			return;
+		}
+		marker_position = string.indexOf('$');
+		id = string.slice(0, marker_position);
+		gpstext = string.slice(marker_position);
+		//do we track this module
+		if (!isTracked[id]) {
+			console.error('[processor]'.grey, 'not tracking'.red, id, '-- not processing!'.red);
+			return;
+		}
+		//parse GPS message
+		gps_msg = nmea.parse(gpstext);
+		if (gps_msg.isValid) {
+			gps_msg.module_id = id;
+			database.addRecord(gps_msg);
+			io.sockets.emit('update-waypoint', gps_msg);
+		}
+	};
 /************************ Update tracking list ************************/
 //refresh tracked id list
 database.on('connected', function () {
@@ -24,17 +53,17 @@ database.on('connected', function () {
 database.on('modulelist-server', function (response) {
 	var list = response.list,
 		length = list.length;
-	queue.isTracked = {};
+	//queue.isTracked = {};
 	console.log('[GPS]'.grey, 'updating tracked modules list:\n', list);
 	if (!list) {return; }
 	for (i = 0; i < length; i += 1) {
-		queue.isTracked[list[i].module_id] = true;
+		isTracked[list[i].module_id] = true;
 	}
 });
 /********************** HTTP server ***********************************/
 //start HTTP server
-var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
-var port = process.env.OPENSHIFT_NODEJS_PORT || 80;
+ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
+port = process.env.OPENSHIFT_NODEJS_PORT || 80;
 server.listen(port, ip);
 app.on('error', function (err) {
     if (err.code === 'EADDRINUSE') {
@@ -83,9 +112,7 @@ io.set('transports', [
 setInterval(function () {
 	io.sockets.emit('clock', (new Date()).valueOf());
 }, 60000);
-queue.on('send-update', function (data) {
-	io.sockets.emit('update-waypoint', data);
-});
+
 io.sockets.on('connection', function (socket) {
 	if (socket_session[socket.id]) {
 		return;
@@ -102,11 +129,17 @@ io.sockets.on('connection', function (socket) {
 	});
 //received trackdata
 	global_socket.on('gps-message', function (message) {
-		queue.add(message);
+		processor(message);
 	});
 //query
 	global_socket.on('query', function (data) {
-		database.query({'socket_id': socket.id, 'module_id': data.module_id, 'begin': data.start, 'end': data.end});
+		var request = {
+			'socket_id': socket.id,
+			'module_id': data.module_id,
+			'begin': data.start,
+			'end': data.end
+		};
+		database.query(request);
 	});
 
 //update tracklist
@@ -118,9 +151,20 @@ io.sockets.on('connection', function (socket) {
 	});
 //get tracklist
 	global_socket.on('get-modulelist', function () {
-		database.getModuleList({'client': 'client', 'socket_id': socket.id});
+		var request = {
+			'socket_id': socket.id,
+			'client': 'client'
+		};
+		database.getModuleList(request);
 	});
-
+//lookup address
+	global_socket.on('get-address', function (coords) {
+		var request = {
+			'socket_id': socket.id,
+			'coords': coords
+		};
+		database.getAddress(request);
+	});
 });
 
 database.on('result', function (response) {
@@ -130,6 +174,10 @@ database.on('result', function (response) {
 database.on('end', function (response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('query-end', response.count);
+});
+database.on('send-address', function (response) {
+	client_socket = socket_session[response.socket_id];
+	client_socket.emit('result-address', response.coords);
 });
 database.on('modulelist-client', function (response) {
 	client_socket = socket_session[response.socket_id];

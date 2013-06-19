@@ -1,6 +1,6 @@
 socket = (function () {
-	//var socket = io.connect('http://gpstracker-insonifi.rhcloud.com:8000');//' + document.domain + ':8000');
-	var socket = io.connect('http://' + document.domain + ':8000');
+	//var socket = io.connect('http://gpstracker-insonifi.rhcloud.com:8000');
+	var socket = io.connect('http://' + document.domain + ':8080');
 	socket.on('handshake', function (data) {
 		console.log('[connected]', data.welcome);
 		$('#info').info('update', data.welcome, 'info');

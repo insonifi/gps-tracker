@@ -6,6 +6,7 @@ var colors = require('colors'),
 	Proto = new EventEmitter(),
 	expire_yr = 2,
 	i,
+	mapApi = require('./map_api'),
 	connect = function () {
 		pg.connect(function (err, client) {
 			if (err) {
@@ -53,8 +54,8 @@ var colors = require('colors'),
 				+ 'module_id	varchar(20),'
 				+ 'timestamp	timestamp,'
 				+ 'address		varchar(100),'
-				+ 'lat		real,'
-				+ 'long		real,'
+				+ 'lat		varchar(10),'
+				+ 'long		varchar(10),'
 				+ 'kph		real,'
 				+ 'track	smallint,'
 				+ 'magv		smallint,'
@@ -74,6 +75,12 @@ pg.on('error', function (err) {
 	Proto.ready = false;
 	connect();
 });
+
+mapApi.on('got-address', function (response) {
+	Proto.setAddress(response.coords);
+	Proto.emit('send-address', response);
+});
+
 Proto.ready = false;
 
 Proto.addRecord = function (gps_msg) {
@@ -88,16 +95,16 @@ Proto.addRecord = function (gps_msg) {
 	//insert new waypoint
 		insert = Proto.client.query({
 			text: 'INSERT INTO waypoints '
-				+ '(module_id, timestamp, address, lat, long, kph, track, magv) '
-				+ 'values($1, $2, $3, $4, $5, $6, $7, $8)',
-			values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
+				+ '(module_id, timestamp, lat, long, kph, track, magv) '
+				+ 'values($1, $2, $3, $4, $5, $6, $7)',
+			values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
 		}, function (err) {
 			if (err) {
 				var update = Proto.client.query({
 					text: 'UPDATE waypoints SET '
-						+ 'address = $3, lat = $4, long = $5, kph = $6, track = $7, magv = $8 '
+						+ 'lat = $3, long = $4, kph = $5, track = $6, magv = $7 '
 						+ 'WHERE module_id = $1 and timestamp = $2',
-					values: [g.module_id, g.timestamp, g.address, g.lat, g.long, g.kph, g.track, g.magv]
+					values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
 				}, error);
 			}
 		});
@@ -172,10 +179,47 @@ Proto.getModuleList = function (request) {
 		text: 'SELECT * FROM modules'
 	}, error);
 	query_modules.on('end', function (result) {
-		console.info('[database]'.grey, 'found', result.rows.length, 'in tracked modules list');
+		console.info('[database]'.grey, 'found', result.rowCount, 'in tracked modules list');
 		Proto.emit('modulelist-' + dst, {'socket_id': client_id, 'list': result.rows});
 	}, error);
 };
+
+Proto.setAddress = function(coords) {
+	var lat = coords.lat,
+		long = coords.long,
+		address = coords.address,
+		update = Proto.client.query({
+			text: 'UPDATE waypoints SET '
+				+ 'address = $1'
+				+ 'WHERE lat = $2 AND long = $3',
+			values: [address, lat, long]
+		}, error);
+	console.log('[database]'.grey, 'cache address:', address, '(', lat, long, ')');
+}
+
+Proto.getAddress = function (req) {
+	var response = {'socket_id': req.socket_id,
+			'coords': req.coords
+		},
+		lat = req.coords.lat,
+		long = req.coords.long,
+		query = Proto.client.query({
+			text: 'SELECT address FROM waypoints WHERE lat = $1 AND long = $2 AND address != \'\' LIMIT 1',
+			values: [lat, long]
+		}, error);
+	console.log('[database]'.grey, 'lookup address', '(', lat, long, ')')
+	query.on('end', function (result) {
+		if (result.rowCount > 0) {
+			response.coords.address = result.rows[0].address;
+			Proto.emit('send-address', response);
+			console.log('[database]'.grey, 'found address', '(', lat, long, ')');
+		} else {
+			console.log('[database]'.grey, 'no address in database', '(', lat, long, ')');
+			mapApi.emit('lookup-address', req);
+		}
+	});
+}
+
 Proto.query = function (request) {
 	if (!Proto.client) {
 		console.log('[database]'.grey, 'not ready yet'.red);
@@ -187,8 +231,9 @@ Proto.query = function (request) {
 	/*** prepare query parameters ***/
 	var begin = request.begin,
 		end = request.end,
-		module_id = request.module_id,
-		client_id = request.socket_id,
+		response = {'module_id': request.module_id,
+			'client_id': request.socket_id
+		},
 	/*** execute query ***/
 		query_waypoints = Proto.client.query({
 			text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp BETWEEN $2 AND $3',
@@ -197,11 +242,13 @@ Proto.query = function (request) {
 
 	console.log('[database]'.grey, 'Query', module_id, begin, '..', end);
 	query_waypoints.on('row', function (row) {
-		Proto.emit('result', {'socket_id': client_id, 'result': row});
+		response.result = row;
+		Proto.emit('result', response);
 	});
 	query_waypoints.on('end', function (result) {
-		console.log('[database]'.grey, 'query complete, found', result.rows.length);
-		Proto.emit('end', {'socket_id': client_id, 'count': result.rows.length});
+		response.count = result.rowCount;
+		console.log('[database]'.grey, 'query complete, found', result.rowCount);
+		Proto.emit('end', response);
 	});
 };
 
