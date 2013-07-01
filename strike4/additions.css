@@ -49,18 +49,47 @@ input:focus {
 }
 #tabs {z-index: 1;}
 #map {
-	width: 100%;
-	min-height: 85%;
 	position: absolute;
-	top: 6em;
-	left: 0px;
+	width: 99%;
+	height: 99%;
+	border-radius: 0.5em 0.5em 0.5em 0.5em;
+}
+#query-box {
+	position: absolute;
+	padding: 0.4em;
+	left: 10%;
+	z-index: 1;
+	width: 35em;
+}
+.shortcut {
+	display: inline-block;
+	font-size: larger;
+	padding: 0.2em;
+	background: white;
+	box-shadow: 0.1em 0.1em 0.2em 0em rgb(0,0,0);
+	border: rgb(52,141,255) 1px none;
+	border-radius: 0em 0em 0.5em 0.5em;
+}
+.closed {	
+	top: -3em;
+}
+.closed:hover {
+	top: -2.8em;
+}
+.opened {	
+	top: 0em;
+}
+#query-params {
+	height: 2.5em;
+	background: white;
+	box-shadow: 0.1em 0.1em 0.2em 0em rgb(0,0,0);
+	border: rgb(52,141,255) 1px none;
+	border-radius: 0em 0em 1em 0em;
+	padding-left: 0.5em;
 }
 #print-frame {
+	display: none;
 	position: fixed;
-	top: 0px;
-	left: 0px;
-	width: 0px;
-	height: 0px;
 }
 #clock {
 	font-size: smaller;
@@ -72,4 +101,64 @@ input:focus {
 	background: #E5E3E1;
 	position: absolute;
 	z-index: 2;
+}
+/* app css stylesheet */
+body {
+  background: grey;
+}
+
+/* Frame */
+.frame {
+	width: 100px;
+	height: 800px;
+	overflow: hidden;
+}
+.frame .slidee {
+/*	padding: 20px 25px;*/
+/*	background: #fff;*/
+}
+.frame ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	font-size: 14px;
+	line-height: 50px;
+}
+.frame ul li {
+	float: left;
+	width: 100%;
+	height: 50px;
+	margin: 0 0 1px;
+	padding: 0;
+	background: #333;
+	color: #ddd;
+	text-align: center;
+	cursor: pointer;
+}
+.frame ul li.active {
+	color: #fff;
+	background: #a03232;
+}
+/* Scrollbar */
+.scrollbar {
+	position: absolute;
+	right: 10px;
+	width: 2px;
+	height: 600px;
+	background: #ccc;
+	line-height: 0;
+}
+.scrollbar .handle {
+	width: 100%;
+	height: 100px;
+	background: #292a33;
+	cursor: pointer;
+}
+.scrollbar .handle .mousearea {
+	position: absolute;
+	top: 0;
+	left: -10px;
+	width: 22px;
+	height: 100%;
 }

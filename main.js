@@ -79,19 +79,17 @@ app.on('error', function (err) {
     }
 });
 app.use(express.compress());
+app.use(express.logger());
 app.use(express.static(__dirname));
-app.use(function (req, res, next) {
-	console.log('[HTTP]'.grey, req.url);
-	next();
-  //res.sendfile(__dirname + '/index.html');
+app.get('/', function (req, res) {
+  console.log('[test]'.white, req.url)
+  res.redirect('/app')
 });
 app.use(function (req, res, next) {
 	//res.send(404, 'Sorry cant find that!');
-	res.status(404).sendfile('notfound.html');
+	res.status(404).sendfile('/notfound.html');
 });
-app.get('/', function (req, res) {
-	res.sendfile(__dirname + '/index.html');
-});
+
 /*********************** Event pool with Socket.IO ****************************/
 io.enable('browser client minification');  // send minified client
 io.enable('browser client etag');          // apply etag caching logic based on version number
