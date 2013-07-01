@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+  	<meta charset="utf-8">
+<!--	  <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?sensor=false"></script>-->
+	  <script src="//cdn.leafletjs.com/leaflet-0.6.2/leaflet.js"></script>
+	  <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+	  <script type="text/javascript" src="/distance.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+	  <script type="text/javascript" src="/jquery-simple-datetimepicker/jquery.simple-dtpicker.js"></script>
+	  <script type="text/javascript" src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha512.js"></script>
+    <script src="lib/angular/angular.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/controllers.js"></script>
+    <script src="js/directives.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/services.js"></script>
+    <script src='js/sly.js'></script>
+<!-- load modules //-->
+		<script type="text/javascript" src="/frontend/connection.js"></script>
+		<script type="text/javascript" src="/frontend/core.js"></script>
+		<script type="text/javascript" src="/frontend/jquery-info.js"></script>
+		<script type="text/javascript" src="js/map.js"></script>
+<!-- load modules //-->
+		<link type="text/css" href="/jquery-simple-datetimepicker/jquery.simple-dtpicker.css" rel="stylesheet" />
+		<link type="text/css" href="/strike4/jquery-ui-1.9.2.custom.min.css" rel="stylesheet" />
+		<link type="text/css" href="/strike4/additions.css" rel="stylesheet" />
+		<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.2/leaflet.css" />
+	</head>
+	<body ng-app="core">
+		<div id='map'></div>
+		<div id='query-box' class='closed'>		
+			<div id='query-params'>
+				<input type="text" id="start-date"></input>
+				<input type="text" id="end-date"></input>
+				<select id="modules-id"></select>
+				<input type='button' id='query'></input>
+			</div>
+			<div class='ui-button shortcut'>Query</div>
+		</div>
+		<div id='tabs' style="display: none">
+			<div id='tabs-query'>
+				<span id='radio'>
+					<input type="radio" id="radio1" name="radio" checked="checked" /><label for="radio1">Waypoints</label>
+					<input type="radio" id="radio2" name="radio" /><label for="radio2">Trips</label>
+				</span>
+				<input type='button' id='print-report' value='Print'></input>
+				<div class='q-view'>
+					<table id='query-table' class='q-table' ></table>
+					<table id='trips-table' class='q-table'></table>
+				</div>
+			</div>
+			<div id='tabs-updates'>
+				<table id='updates-table' class='u-table'></table>
+			</div>
+			<div id='tabs-settings'>
+				<table id='modulelist-table'></table>
+				<input type='button' id='update-list' value='Update'>
+				<input type='button' id='append-list' value='+'>
+				<input type='password' id='update-pwd' placeholder='Password'>
+			</div>
+			<div id='info'></div>
+			<div id='clock'></div>
+		</div>
+		<div id='select' style='visibility: hidden'>select</div>
+		<iframe id='print-frame'></iframe>
+    <div ng-controller='testCtrl'>
+      <div class="scrollbar">
+        <div class="handle">
+	        <div class="mousearea"></div>
+        </div>
+      </div>
+      <div id='frame' class='frame'>
+        <ul class='slidee'>
+    <!--          <li>o</li><li>o</li><li>o</li><li>o</li><li>o</li><li>o</li><li>o</li><li>o</li><li>o</li>-->
+          <li id='{{$index}}' ng-repeat='item in list' ng-mouseover='i = date' ng-mouseleave='i = 1' ng-mouseclick='i = list'>
+            <span class='item'>{{item.idx}} ---- {{item.name}}</span><span> == {{i}}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  <script>
+    jQuery(function ($) {
+      var $frame = $('#frame');
+	    // Call Sly on frame
+	    var sly = new Sly($frame, {
+		    itemNav: 'forceCentered',
+		    //smart: 1,
+		    activateMiddle: 1,
+		    activateOn: 'click',
+		    mouseDragging: 1,
+		    touchDragging: 1,
+		    releaseSwing: 1,
+		    startAt: 0,
+		    scrollBar: $frame.parent().find('.scrollbar'),
+		    scrollBy: 1,
+		    speed: 300,
+		    elasticBounds: 1,
+		    easing: 'easeOutExpo',
+		    dragHandle: 1,
+		    dynamicHandle: 1,
+		    clickBar: 1,
+	    }).init();
+	    sly.reload();
+    });
+  </script>
+		<script type="text/javascript">
+			$(function() {
+				var date = new Date;
+				var yesterDate = date.getFullYear() + '-'
+					+ (date.getMonth()+1) + '-' + (date.getDate()-1)
+					+ ' ' + date.getHours() + ':' + date.getMinutes();
+				//console.log(currentDate)
+				$('#start-date').appendDtpicker({
+					dateFormat: 'h:mm D.M.YYYY',
+					current: yesterDate
+				})
+				$('#end-date').appendDtpicker({
+					dateFormat: 'h:mm D.M.YYYY'
+				})
+			});
+			$(function () {
+				$('#query').button({label: 'Query'}).click(core.query);
+				$('#radio').buttonset().change(core.toggleQuery);
+				$('#update-list').button().click(core.updateList);
+				$('#append-list').button().click(core.addModuleId);
+				$('#print-report').button().click(core.printReport);
+				$('.shortcut').click(function () {
+						var $parent = this.parentNode;
+						if ($parent.classList.contains('closed')) {
+							$($parent).switchClass('closed', 'opened', 300, 'easeOutExpo');
+						} else {
+							$($parent).switchClass('opened', 'closed', 300, 'easeOutExpo');
+						}
+					})
+			});
+
+		</script>
+	</body>
+</html>

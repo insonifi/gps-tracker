@@ -1,0 +1,164 @@
+.q-table {width: 100%;}
+.q-row {}
+.q-row:hover {background: #ffffc8;}
+.q-time {border: #df7611; color: black; max-width: 6em; text-align: center;}
+.q-time-now {
+	font-size: smaller;
+	border: #df7611;
+	color: grey;
+	padding-right: 0.5em;
+	text-align: center;
+	max-width: 3.2em;
+}
+.q-address {color: grey; padding-left: 1em; border-left: #676565 1px dotted;}
+.q-address-now {color: grey; padding-left: 1em;}
+.q-speed {border: #676565; padding-left: 1em; color: grey; max-width: 7em; text-align: right;}
+.q-speed-now {
+	font-size: larger;
+	border: #efe9e6 solid;
+	border-radius: 0.4em;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	width: 4em;
+	text-align: center;
+	display: inline-block;
+}
+.q-view {
+	display: block;
+	width: 100%;
+	max-height: 10em;
+	overflow-y:auto;
+}
+.q-separator {
+	height: 0.5em;
+};
+.info {}
+.u-table {width: 100%}
+input {
+	border: 1px solid #efe9e6;
+	padding: 5px;
+	border-radius: 5px;
+}
+input#update-pwd {
+	width: 5em;
+}
+input:focus {
+	border: 1px solid #df7611;
+	padding: 5px;
+	border-radius: 5px;
+}
+#tabs {z-index: 1;}
+#map {
+	position: absolute;
+	width: 99%;
+	height: 99%;
+	border-radius: 0.2em 0.2em 0.2em 0.2em;
+}
+#query-box {
+	position: absolute;
+	padding: 0.4em;
+	left: 10%;
+	z-index: 1;
+	width: 35em;
+}
+.shortcut {
+	display: inline-block;
+	font-size: larger;
+	padding: 0.2em;
+	background: white;
+	box-shadow: 0.1em 0.1em 0.2em 0em rgb(0,0,0);
+	border: rgb(52,141,255) 1px none;
+	border-radius: 0em 0em 0.5em 0.5em;
+}
+.closed {	
+	top: -3em;
+}
+.closed:hover {
+	top: -2.8em;
+}
+.opened {	
+	top: 0em;
+}
+#query-params {
+	height: 2.5em;
+	background: white;
+	box-shadow: 0.1em 0.1em 0.2em 0em rgb(0,0,0);
+	border: rgb(52,141,255) 1px none;
+	border-radius: 0em 0em 1em 0em;
+	padding-left: 0.5em;
+}
+#print-frame {
+	display: none;
+	position: fixed;
+}
+#clock {
+	font-size: smaller;
+	border: #df7611;
+}
+#select {
+	border-radius: 0.2em;
+	padding: 0.2em;
+	background: #E5E3E1;
+	position: absolute;
+	z-index: 2;
+}
+/* app css stylesheet */
+body {
+  background: grey;
+}
+
+/* Frame */
+.frame {
+	width: 100px;
+	height: 800px;
+	overflow: hidden;
+}
+.frame .slidee {
+/*	padding: 20px 25px;*/
+/*	background: #fff;*/
+}
+.frame ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	font-size: 14px;
+	line-height: 50px;
+}
+.frame ul li {
+	float: left;
+	width: 100%;
+	height: 50px;
+	margin: 0 0 1px;
+	padding: 0;
+	background: #333;
+	color: #ddd;
+	text-align: center;
+	cursor: pointer;
+}
+.frame ul li.active {
+	color: #fff;
+	background: #a03232;
+}
+/* Scrollbar */
+.scrollbar {
+	position: absolute;
+	right: 10px;
+	width: 2px;
+	height: 600px;
+	background: #ccc;
+	line-height: 0;
+}
+.scrollbar .handle {
+	width: 100%;
+	height: 100px;
+	background: #292a33;
+	cursor: pointer;
+}
+.scrollbar .handle .mousearea {
+	position: absolute;
+	top: 0;
+	left: -10px;
+	width: 22px;
+	height: 100%;
+}
