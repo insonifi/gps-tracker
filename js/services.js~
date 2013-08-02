@@ -1,0 +1,14 @@
+'use strict';
+
+/* Services */
+
+
+// Demonstrate how to register services
+// In this case it is a simple value service.
+angular.module('core.services', []).
+  factory('sendQueryRequest', function ($scope, socket) {
+    return function () {
+      console.log('query!');
+      socket.emit('test');
+    }
+  });
