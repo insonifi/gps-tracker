@@ -221,6 +221,28 @@ Proto.getAddress = function (req) {
 }
 
 Proto.query = function (request) {
+  /*** prepare and validate query ***/
+  var Query = function () {
+	    var params = ['begin', 'end', 'module_id'],
+	    param,
+	    length = params.length,
+	    query = {valid: true};
+	    for (i = 0; i < length; i += 1) {
+	      param = params[i];
+        query[param] = request[param];
+	      if (!request[param]) { query.valid = false; }
+	    }
+	    return query;
+    }(),
+	  response = {
+	    'module_id': request.module_id,
+  		'socket_id': request.socket_id
+		};
+	if (!Query.valid) {
+	  console.log('[database]'.grey, 'query invalid', Query);
+	  return;
+	}
+	/*** check database connection ***/
 	if (!Proto.client) {
 		console.log('[database]'.grey, 'not ready yet'.red);
 		setTimeout(function () {
@@ -228,19 +250,14 @@ Proto.query = function (request) {
 		}, 2 * 1000); //retry in 2 sec;
 		return;
 	}
-	/*** prepare query parameters ***/
-	var begin = request.begin,
-		end = request.end,
-		response = {'module_id': request.module_id,
-			'client_id': request.socket_id
-		},
+	
 	/*** execute query ***/
-		query_waypoints = Proto.client.query({
-			text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp BETWEEN $2 AND $3',
-			values: [module_id, begin, end]
-		}, error);
+	var query_waypoints = Proto.client.query({
+		text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp BETWEEN $2 AND $3',
+		values: [Query.module_id, Query.begin, Query.end]
+	}, error);
 
-	console.log('[database]'.grey, 'Query', module_id, begin, '..', end);
+	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.begin, '..', Query.end, ')');
 	query_waypoints.on('row', function (row) {
 		response.result = row;
 		Proto.emit('result', response);

@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 var net = require('net');
-//var track = require('./kml_track');
 var colors = require('colors'),
-	//queue = require('./queue'),
 	database = require('./database_pg'),
 	express = require('express'),
 	mapApi = require('./map_api'),
@@ -31,12 +29,12 @@ var colors = require('colors'),
 		marker_position = string.indexOf('$');
 		id = string.slice(0, marker_position);
 		gpstext = string.slice(marker_position);
-		//do we track this module
+		/* do we track this module */
 		if (!isTracked[id]) {
 			console.error('[processor]'.grey, 'not tracking'.red, id, '-- not processing!'.red);
 			return;
 		}
-		//parse GPS message
+		/* parse GPS message */
 		gps_msg = nmea.parse(gpstext);
 		if (gps_msg.isValid) {
 			gps_msg.module_id = id;
@@ -45,15 +43,14 @@ var colors = require('colors'),
 		}
 	};
 /************************ Update tracking list ************************/
-//refresh tracked id list
+/* refresh tracked id list */
 database.on('connected', function () {
 	database.getModuleList({client: 'server'});
 });
-//server tracked id list
+/* server tracked id list */
 database.on('modulelist-server', function (response) {
 	var list = response.list,
 		length = list.length;
-	//queue.isTracked = {};
 	console.log('[GPS]'.grey, 'updating tracked modules list:\n', list);
 	if (!list) {return; }
 	for (i = 0; i < length; i += 1) {
@@ -61,7 +58,7 @@ database.on('modulelist-server', function (response) {
 	}
 });
 /********************** HTTP server ***********************************/
-//start HTTP server
+/* start HTTP server */
 ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 port = process.env.OPENSHIFT_NODEJS_PORT || 80;
 server.listen(port, ip);
@@ -79,26 +76,26 @@ app.on('error', function (err) {
     }
 });
 app.use(express.compress());
-app.use(express.logger());
+/* app.use(express.logger()); */
 app.use(express.static(__dirname));
 app.get('/', function (req, res) {
   console.log('[test]'.white, req.url)
   res.redirect('/app')
 });
 app.use(function (req, res, next) {
-	//res.send(404, 'Sorry cant find that!');
+	/* res.send(404, 'Sorry cant find that!'); */
 	res.status(404).sendfile('/notfound.html');
 });
 
 /*********************** Event pool with Socket.IO ****************************/
-io.enable('browser client minification');  // send minified client
-io.enable('browser client etag');          // apply etag caching logic based on version number
-io.enable('browser client gzip');          // gzip the file
-io.set('log level', 1);                    // reduce logging
+io.enable('browser client minification');  /*  send minified client */
+io.enable('browser client etag');          /*  apply etag caching logic based on version number */
+io.enable('browser client gzip');          /*  gzip the file */
+io.set('log level', 1);                    /*  reduce logging */
 
-// enable all transports (optional if you want flashsocket support, please note that some hosting
-// providers do not allow you to create servers that listen on a port different than 80 or their
-// default port)
+/* enable all transports (optional if you want flashsocket support, please note that some hosting
+ * providers do not allow you to create servers that listen on a port different than 80 or their
+ * default port) */
 io.set('transports', [
     'websocket'
   /*, 'htmlfile'
@@ -106,7 +103,7 @@ io.set('transports', [
    *, 'jsonp-polling' */
 ]);
 /********************/
-//clock
+/* clock */
 setInterval(function () {
 	io.sockets.emit('clock', (new Date()).valueOf());
 }, 60000);
@@ -125,11 +122,11 @@ io.sockets.on('connection', function (socket) {
 		console.log('[socket]'.grey, 'socket disconnected');
 		delete socket_session[this.id];
 	});
-//received trackdata
+/* received trackdata */
 	global_socket.on('gps-message', function (message) {
 		processor(message);
 	});
-//query
+/* query */
 	global_socket.on('query', function (data) {
 		var request = {
 			'socket_id': socket.id,
@@ -140,14 +137,14 @@ io.sockets.on('connection', function (socket) {
 		database.query(request);
 	});
 
-//update tracklist
+/* update tracklist */
 	global_socket.on('update-modulelist', function (changes) {
 		if (changes.hash === auth.hash) {
 			console.log('[socket]'.grey, 'update accepted'.green);
 			database.updateModuleList(changes);
 		}
 	});
-//get tracklist
+/* get tracklist */
 	global_socket.on('get-modulelist', function () {
 		var request = {
 			'socket_id': socket.id,
@@ -155,7 +152,7 @@ io.sockets.on('connection', function (socket) {
 		};
 		database.getModuleList(request);
 	});
-//lookup address
+/* lookup address */
 	global_socket.on('get-address', function (coords) {
 		var request = {
 			'socket_id': socket.id,

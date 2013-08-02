@@ -36,12 +36,14 @@ def generateNmea():
 ID = '37127099910'
 HOST = '127.0.0.1'
 PORT = 920
-if len(sys.argv) == 3:
+if len(sys.argv) > 1:
     ID = sys.argv[1]
+if len(sys.argv) == 3:
     HOST, PORT = sys.argv[2].split(':')
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, int(PORT)))
 s.send(bytearray('I' + ID, 'utf8'))
+time.sleep(1)
 print('send from ID {0} to {1}:{2}'.format(ID, HOST, PORT))
 while True:
     s.send(bytearray(generateNmea(), 'utf8'))

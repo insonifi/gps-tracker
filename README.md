@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Running a custom/latest Node[.js] version on RedHat's OpenShift PaaS
 ====================================================================
 This git repository is a sample Node application along with the
@@ -67,3 +68,7 @@ That's it, you can now checkout your application at:
     http://palinode-$yournamespace.rhcloud.com
     ( See env @ http://palinode-$yournamespace.rhcloud.com/env )
 
+=======
+gps-tracker-frontend
+====================
+>>>>>>> 602d73e0d9e62079d3cf79d2e43acda8ee40a186

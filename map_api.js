@@ -37,15 +37,22 @@ var http = require('http'),
 				});
 				res.on('end', function () {
 					var response = JSON.parse(data.toString());
-					if ('OK' === response.status) {
-						temp.coords.address = getAddressString(response);
-						Proto.emit('got-address', temp); /* return address */
-						console.error('[google]'.grey, response.status.green, temp.coords.address);
-					} else {
-						setTimeout(function () {
-							Proto.emit('lookup-address', temp); /* retry */
-						}, delay);
-						console.error('[google]'.grey, response.status.red, 'retry in', delay);
+					switch (response.status) {
+					  case 'OK':
+						  temp.coords.address = getAddressString(response);
+						  Proto.emit('got-address', temp); /* return address */
+						  console.error('[google]'.grey, response.status.green, temp.coords.address);
+						  return;
+					
+					  case 'ZERO_RESULTS':
+					    Proto.emit('got-address', ''); /* return empty string */
+					    return;
+            default:
+					    setTimeout(function () {
+						    Proto.emit('lookup-address', temp); /* retry */
+					    }, delay);
+					    console.error('[google]'.grey, response.status.red, 'retry in', delay);
+					    return;
 					}
 				});
 			});
