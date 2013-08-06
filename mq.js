@@ -1,11 +1,12 @@
 var iron_mq = require('iron_mq'),
+    colors = require('colors'),
     imq = new iron_mq.Client(),
     queue = imq.queue('gps-messages'),
     queue_cb = function (err, body) {
         if (err) { console.log('[IronMQ]'.grey, err); }
-        console.log('[IronMQ]'.grey, body);
+        if (body) { console.log('[IronMQ]'.grey, body); }
     };
-
+/*
 queue.update({
     push_type: 'multicast',
     retries: 100,
@@ -13,3 +14,4 @@ queue.update({
 }, queue_cb);
 
 queue.add_subscribers({url: 'http://' + process.env.OPENSHIFT_APP_DNS + '/pushq'}, queue_cb);
+*/

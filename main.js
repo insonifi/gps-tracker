@@ -6,6 +6,7 @@ var colors = require('colors'),
 	express = require('express'),
 	mapApi = require('./map_api'),
 	nmea = require('./nmea'),
+    mq = require('./mq'),
 	app = express(),
 	server = require('http').createServer(app),
 	io = require('socket.io').listen(server),
@@ -59,8 +60,8 @@ database.on('modulelist-server', function (response) {
 });
 /********************** HTTP server ***********************************/
 /* start HTTP server */
-ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
-port = process.env.OPENSHIFT_NODEJS_PORT || 80;
+ip = process.env.IP; /* process.env.OPENSHIFT_NODEJS_IP  || '127.0.0.1'; */
+port = process.env.PORT /*process.env.OPENSHIFT_NODEJS_PORT || 80; */
 server.listen(port, ip);
 app.on('error', function (err) {
     if (err.code === 'EADDRINUSE') {
@@ -79,8 +80,18 @@ app.use(express.compress());
 /* app.use(express.logger()); */
 app.use(express.static(__dirname));
 app.get('/', function (req, res) {
-  console.log('[test]'.white, req.url)
   res.redirect('/app')
+});
+app.use('/pushq',function (req, res, next) {
+    req.body = '';
+    req.on('data', function (data) {
+        req.body += data;
+    });
+    req.on('end', function () {
+        console.log('[PUSHQ]'.white, req.body);
+        res.send(200); /* acknoledge message arrival */  
+        next();
+    })
 });
 app.use(function (req, res, next) {
 	/* res.send(404, 'Sorry cant find that!'); */
