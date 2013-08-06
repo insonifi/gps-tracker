@@ -41,8 +41,19 @@ var colors = require('colors'),
 			gps_msg.module_id = id;
 			database.addRecord(gps_msg);
 			io.sockets.emit('update-waypoint', gps_msg);
-		}
-	};
+		};
+    
+	},
+    getBody = function (req, res, next) {
+        req.body = '';
+        req.setEncoding('utf8');
+        req.on('data', function(chunk) { 
+           req.body += chunk;
+        });
+        req.on('end', function() {
+            next();
+        });
+    };
 /************************ Update tracking list ************************/
 /* refresh tracked id list */
 database.on('connected', function () {
@@ -82,17 +93,11 @@ app.use(express.static(__dirname));
 app.get('/', function (req, res) {
   res.redirect('/app')
 });
-app.use('/pushq',function (req, res, next) {
-    req.body = '';
-    req.on('data', function (data) {
-        req.body += data;
-    });
-    req.on('end', function () {
-        console.log('[PUSHQ]'.white, req.body);
-        res.send(200); /* acknoledge message arrival */  
-        next();
-    })
-});
+app.use('/pushq', getBody);
+app.post('/pushq', function (req, res) {
+    console.log('[IronMQ]'.white, req.body);
+    res.send(200);
+})
 app.use(function (req, res, next) {
 	/* res.send(404, 'Sorry cant find that!'); */
 	res.status(404).sendfile('/notfound.html');
