@@ -14,7 +14,8 @@
     "express": "",
     "colors": "",
     "socket.io": "",
-    "pg": ""
+    "pg": "",
+    "iron_mq": ""
   },
   "scripts": {
     "start": "node main.js"
