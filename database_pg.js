@@ -4,7 +4,6 @@ var colors = require('colors'),
 	db_uri = (process.env.OPENSHIFT_POSTGRESQL_DB_URL || 'pg://localhost') + '/' + (process.env.OPENSHIFT_APP_NAME || 'gpstracker'),
 	EventEmitter = require('events').EventEmitter,
 	Proto = new EventEmitter(),
-	expire_yr = 2,
 	i,
 	mapApi = require('./map_api'),
 	connect = function () {
@@ -31,11 +30,13 @@ var colors = require('colors'),
 			}, 2 * 1000); //retry in 2 sec;
 			return;
 		}
+        var expire = 2 * 3600 * 24 * 365,
+            now = (new Date()).valueOf();
 		//delete expired records if any
 		console.log('[database]'.grey, 'cleaning up');
 		Proto.client.query({
-			text: 'DELETE FROM waypoints WHERE timestamp (now() - \'$1 years\')::interval',
-			values: [expire_yr]
+			text: 'DELETE FROM waypoints WHERE timestamp <@ lseg(($1,0), ($2,0))',
+			values: [now - expire, now]
 		}, error);
 		Proto.client.query({text: 'VACUUM'}, error);
 	},
@@ -52,10 +53,9 @@ var colors = require('colors'),
 		Proto.client.query({
 			text: 'CREATE TABLE waypoints ('
 				+ 'module_id	varchar(20),'
-				+ 'timestamp	timestamp,'
-				+ 'address		varchar(100),'
-				+ 'lat		varchar(10),'
-				+ 'long		varchar(10),'
+				+ 'timestamp	point,'
+				+ 'address		varchar(100) NOT NULL CHECK (address <> \'\'),'
+				+ 'coords		point,'
 				+ 'kph		real,'
 				+ 'track	smallint,'
 				+ 'magv		smallint,'
@@ -95,15 +95,15 @@ Proto.addRecord = function (gps_msg) {
 	//insert new waypoint
 		insert = Proto.client.query({
 			text: 'INSERT INTO waypoints '
-				+ '(module_id, timestamp, lat, long, kph, track, magv) '
-				+ 'values($1, $2, $3, $4, $5, $6, $7)',
+				+ '(module_id, timestamp, coords, kph, track, magv) '
+				+ 'values($1, ($2, 0), ($3, $4), $5, $6, $7)',
 			values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
 		}, function (err) {
 			if (err) {
 				var update = Proto.client.query({
 					text: 'UPDATE waypoints SET '
-						+ 'lat = $3, long = $4, kph = $5, track = $6, magv = $7 '
-						+ 'WHERE module_id = $1 and timestamp = $2',
+						+ 'coords = ($3, $4), kph = $5, track = $6, magv = $7 '
+						+ 'WHERE module_id = $1 and timestamp ~= $2',
 					values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
 				}, error);
 			}
@@ -191,7 +191,7 @@ Proto.setAddress = function(coords) {
 		update = Proto.client.query({
 			text: 'UPDATE waypoints SET '
 				+ 'address = $1'
-				+ 'WHERE lat = $2 AND long = $3',
+				+ 'WHERE coords ~= ($2, $3)',
 			values: [address, lat, long]
 		}, error);
 	console.log('[database]'.grey, 'cache address:', address, '(', lat, long, ')');
@@ -204,7 +204,7 @@ Proto.getAddress = function (req) {
 		lat = req.coords.lat,
 		long = req.coords.long,
 		query = Proto.client.query({
-			text: 'SELECT address FROM waypoints WHERE lat = $1 AND long = $2 AND address != \'\' LIMIT 1',
+			text: 'SELECT address FROM waypoints WHERE coords ~= ($1, $2) AND address NOT NULL LIMIT 1',
 			values: [lat, long]
 		}, error);
 	console.log('[database]'.grey, 'lookup address', '(', lat, long, ')')
@@ -222,38 +222,38 @@ Proto.getAddress = function (req) {
 
 Proto.query = function (request) {
   /*** prepare and validate query ***/
-  var Query = function () {
-	    var params = ['begin', 'end', 'module_id'],
-	    param,
-	    length = params.length,
-	    query = {valid: true};
-	    for (i = 0; i < length; i += 1) {
-	      param = params[i];
-        query[param] = request[param];
-	      if (!request[param]) { query.valid = false; }
-	    }
-	    return query;
+  var Query = function (request) {
+        var params = ['begin', 'end', 'module_id'],
+            param,
+            length = params.length,
+            query = {valid: true};
+        for (i = 0; i < length; i += 1) {
+            param = params[i];
+            query[param] = request[param];
+            if (!request[param]) { query.valid = false; }
+        }
+        return query;
     }(),
-	  response = {
-	    'module_id': request.module_id,
-  		'socket_id': request.socket_id
+    response = {
+        'module_id': request.module_id,
+        'socket_id': request.socket_id
 		};
-	if (!Query.valid) {
-	  console.log('[database]'.grey, 'query invalid', Query);
-	  return;
-	}
-	/*** check database connection ***/
-	if (!Proto.client) {
-		console.log('[database]'.grey, 'not ready yet'.red);
-		setTimeout(function () {
-			Proto.query(request);
-		}, 2 * 1000); //retry in 2 sec;
-		return;
-	}
-	
+        
+    if (!Query.valid) {
+        console.log('[database]'.grey, 'query invalid', Query);
+        return;
+    }
+    /*** check database connection ***/
+    if (!Proto.client) {
+        console.log('[database]'.grey, 'not ready yet'.red);
+        setTimeout(function () {
+            Proto.query(request);
+        }, 2 * 1000); //retry in 2 sec;
+        return;
+    }
 	/*** execute query ***/
 	var query_waypoints = Proto.client.query({
-		text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp BETWEEN $2 AND $3',
+		text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp <@ lseg(($2,0), ($3,0))',
 		values: [Query.module_id, Query.begin, Query.end]
 	}, error);
 
