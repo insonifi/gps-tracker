@@ -35,7 +35,7 @@ exports.parse = function (input) {
 			data[0].slice(0, 2),
 			data[0].slice(2, 4),
 			data[0].slice(4, 6)
-		))).toISOString();//.valueOf()//store date as integer
+		))).valueOf()//store date as integer//.toISOString();//to store as ISO strings
 		//nmea.isValid = data[1] == 'A';
 		nmea.lat = ((((data[2] | 0) / 100) | 0) + (parseFloat(data[2]) % 100) * 0.0166666666667).toFixed(6);
 		if (data[3] === 'S') {nmea.lat = -nmea.lat; }
