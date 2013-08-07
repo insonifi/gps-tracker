@@ -45,12 +45,13 @@ var colors = require('colors'),
     
 	},
     getBody = function (req, res, next) {
-        req.body = '';
+	var body = '';
         req.setEncoding('utf8');
         req.on('data', function(chunk) { 
-           req.body += chunk;
+           body += chunk;
         });
         req.on('end', function() {
+	    req.body = body;
             next();
         });
     };
@@ -73,7 +74,9 @@ database.on('modulelist-server', function (response) {
 /* start HTTP server */
 ip = process.env.IP || process.env.OPENSHIFT_NODEJS_IP  || '127.0.0.1';
 port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 80;
-server.listen(port, ip);
+server.listen(port, ip, function () {
+	console.log('[http]'.grey, 'listening on ', ip, ':', port);
+});
 app.on('error', function (err) {
     if (err.code === 'EADDRINUSE') {
         console.log("[express]".grey, "Address in use, trying again...");
@@ -93,8 +96,8 @@ app.use(express.static(__dirname));
 app.get('/', function (req, res) {
   res.redirect('/app')
 });
-app.use('/pushq', getBody);
-app.post('/pushq', function (req, res) {
+//app.use('/pushq', getBody);
+app.post('/pushq', getBody, function (req, res, next) {
     console.log('[IronMQ]'.white, req.body);
     res.send(200);
 })
