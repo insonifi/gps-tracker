@@ -71,8 +71,8 @@ database.on('modulelist-server', function (response) {
 });
 /********************** HTTP server ***********************************/
 /* start HTTP server */
-ip = process.env.IP; /* process.env.OPENSHIFT_NODEJS_IP  || '127.0.0.1'; */
-port = process.env.PORT /*process.env.OPENSHIFT_NODEJS_PORT || 80; */
+ip = process.env.IP || process.env.OPENSHIFT_NODEJS_IP  || '127.0.0.1';
+port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 80;
 server.listen(port, ip);
 app.on('error', function (err) {
     if (err.code === 'EADDRINUSE') {
