@@ -58,8 +58,11 @@ var colors = require('colors'),
 				+ 'coords		point,'
 				+ 'kph		real,'
 				+ 'track	smallint,'
-				+ 'magv		smallint,'
-				+ 'PRIMARY KEY (module_id, timestamp))'
+				+ 'magv		smallint'
+				+ ')'
+		}, error);
+		Proto.client.query({
+			text: 'CREATE INDEX coords_idx ON waypoints USING gist (timestamp)'
 		}, error);
 		Proto.client.query({
 			text: 'CREATE TABLE modules ('
