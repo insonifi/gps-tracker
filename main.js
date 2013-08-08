@@ -102,7 +102,7 @@ app.post('/pushq', getBody, function (req, res, next) {
 })
 app.use(function (req, res, next) {
 	/* res.send(404, 'Sorry cant find that!'); */
-	res.status(404).sendfile('/notfound.html');
+	res.status(404).sendfile('notfound.html');
 });
 
 /*********************** Event pool with Socket.IO ****************************/
