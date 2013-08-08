@@ -6,7 +6,6 @@ var colors = require('colors'),
 	express = require('express'),
 	mapApi = require('./map_api'),
 	nmea = require('./nmea'),
-    mq = require('./mq'),
 	app = express(),
 	server = require('http').createServer(app),
 	io = require('socket.io').listen(server),
@@ -32,7 +31,7 @@ var colors = require('colors'),
 		gpstext = string.slice(marker_position);
 		/* do we track this module */
 		if (!isTracked[id]) {
-			console.error('[processor]'.grey, 'not tracking'.red, id, '-- not processing!'.red);
+			console.error('[processor]'.grey, 'not tracking'.red, id);
 			return;
 		}
 		/* parse GPS message */
@@ -40,7 +39,7 @@ var colors = require('colors'),
 		if (gps_msg.isValid) {
 			gps_msg.module_id = id;
 			database.addRecord(gps_msg);
-			io.sockets.emit('update-waypoint', gps_msg);
+            io.sockets.emit('update-waypoint', gps_msg);
 		};
     
 	},
@@ -51,7 +50,7 @@ var colors = require('colors'),
            body += chunk;
         });
         req.on('end', function() {
-	    req.body = body;
+        req.body = body;
             next();
         });
     };
@@ -98,7 +97,7 @@ app.get('/', function (req, res) {
 });
 //app.use('/pushq', getBody);
 app.post('/pushq', getBody, function (req, res, next) {
-    console.log('[IronMQ]'.white, req.body);
+    processor(req.body);
     res.send(200);
 })
 app.use(function (req, res, next) {
