@@ -226,10 +226,10 @@ Proto.query = function (request) {
         var params = ['begin', 'end', 'module_id'],
             param,
             length = params.length;
-        request.valid = true;
+        request.isValid = true;
         for (param in params) {;
             if (!request.hasOwnProperty(param)) {
-                request.valid = false;
+                request.isValid = false;
                 break;
             }
         }
@@ -240,7 +240,7 @@ Proto.query = function (request) {
         'socket_id': request.socket_id
 		};
         
-    if (!Query.valid) {
+    if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
         return;
     }
