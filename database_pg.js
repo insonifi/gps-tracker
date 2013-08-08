@@ -221,14 +221,16 @@ Proto.getAddress = function (req) {
 }
 
 Proto.query = function (request) {
+console.log(request);
   /*** prepare and validate query ***/
   var Query = function (request) {
         var params = ['begin', 'end', 'module_id'],
-            param,
+            idx,
             length = params.length;
+        if 
         request.isValid = true;
-        for (param in params) {;
-            if (!request.hasOwnProperty(param)) {
+        for (idx = 0; idx < length; idx += 1) {;
+            if (!request[idx]) {
                 request.isValid = false;
                 break;
             }

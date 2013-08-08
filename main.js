@@ -44,7 +44,7 @@ var colors = require('colors'),
     
 	},
     getBody = function (req, res, next) {
-	    var body = '';
+        var body = '';
         req.setEncoding('utf8');
         req.on('data', function(chunk) { 
            body += chunk;
@@ -145,13 +145,12 @@ io.sockets.on('connection', function (socket) {
 	});
 /* query */
 	global_socket.on('query', function (data) {
-		var request = {
-			'socket_id': socket.id,
+		database.query({
+            'socket_id': socket.id,
 			'module_id': data.module_id,
 			'begin': data.start,
 			'end': data.end
-		};
-		database.query(request);
+		});
 	});
 
 /* update tracklist */
@@ -163,19 +162,17 @@ io.sockets.on('connection', function (socket) {
 	});
 /* get tracklist */
 	global_socket.on('get-modulelist', function () {
-		var request = {
-			'socket_id': socket.id,
+		database.getModuleList({
+            'socket_id': socket.id,
 			'client': 'client'
-		};
-		database.getModuleList(request);
+		});
 	});
 /* lookup address */
 	global_socket.on('get-address', function (coords) {
-		var request = {
-			'socket_id': socket.id,
+		database.getAddress({
+            'socket_id': socket.id,
 			'coords': coords
-		};
-		database.getAddress(request);
+		});
 	});
 });
 
