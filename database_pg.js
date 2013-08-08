@@ -227,7 +227,6 @@ console.log(request);
         var params = ['begin', 'end', 'module_id'],
             idx,
             length = params.length;
-        if 
         request.isValid = true;
         for (idx = 0; idx < length; idx += 1) {;
             if (!request[idx]) {
