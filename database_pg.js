@@ -225,14 +225,15 @@ Proto.query = function (request) {
   var Query = function (request) {
         var params = ['begin', 'end', 'module_id'],
             param,
-            length = params.length,
-            query = {valid: true};
-        for (i = 0; i < length; i += 1) {
-            param = params[i];
-            query[param] = request[param];
-            if (!request[param]) { query.valid = false; }
+            length = params.length;
+        request.valid = true;
+        for (param in params) {;
+            if (!request.hasOwnProperty(param)) {
+                request.valid = false;
+                break;
+            }
         }
-        return query;
+        return request;
     }(),
     response = {
         'module_id': request.module_id,
