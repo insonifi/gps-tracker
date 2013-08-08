@@ -84,7 +84,7 @@ app.on('error', function (err) {
             app.listen(port, ip);
         }, 1000);
     } else if (err.code === 'EACCES') {
-        console.log("[express".grey, "You don't have permissions to bind to this address. Try running via sudo.");
+        console.log("[express]".grey, "You don't have permissions to bind to this address. Try running via sudo.");
     } else {
         console.log("[express]".grey, err);
     }
@@ -95,14 +95,13 @@ app.use(express.static(__dirname));
 app.get('/', function (req, res) {
   res.redirect('/app')
 });
-//app.use('/pushq', getBody);
 app.post('/pushq', getBody, function (req, res, next) {
     processor(req.body);
     res.send(200);
 })
 app.use(function (req, res, next) {
-	/* res.send(404, 'Sorry cant find that!'); */
-	res.status(404).sendfile('notfound.html');
+	res.send(404, 'Sorry cant find that!');
+	/* res.status(404).sendfile('/notfound.html'); */
 });
 
 /*********************** Event pool with Socket.IO ****************************/
