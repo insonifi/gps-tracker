@@ -44,7 +44,7 @@ var colors = require('colors'),
     
 	},
     getBody = function (req, res, next) {
-	var body = '';
+	    var body = '';
         req.setEncoding('utf8');
         req.on('data', function(chunk) { 
            body += chunk;
