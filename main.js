@@ -91,7 +91,7 @@ app.on('error', function (err) {
 });
 app.use(express.compress());
 /* app.use(express.logger()); */
-app.use(express.static(__dirname));
+app.use(express.static(__dirname + '/app'));
 app.get('/', function (req, res) {
   res.redirect('/app')
 });
