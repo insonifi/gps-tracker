@@ -1,4 +1,4 @@
-lib-cov
+Lib-cov
 *.seed
 *.log
 *.csv
@@ -13,3 +13,5 @@ results
 
 node_modules
 npm-debug.log
+.iron.json
+.c9revisions
