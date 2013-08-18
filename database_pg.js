@@ -232,7 +232,7 @@ console.log(request);
             length = params.length;
         request.isValid = true;
         for (idx = 0; idx < length; idx += 1) {;
-            if (!request[idx]) {
+            if (!request[params[idx]]) {
                 request.isValid = false;
                 break;
             }
