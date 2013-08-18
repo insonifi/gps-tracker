@@ -270,7 +270,7 @@ Proto.query = function (request) {
 	});
 	query_waypoints.on('end', function (result) {
 		response.count = result != undefined ? result.rowCount : 0;
-		console.log('[database]'.grey, 'query complete, found', result.rowCount);
+		console.log('[database]'.grey, 'query complete, found', response.count);
 		Proto.emit('end', response);
 	});
 };
