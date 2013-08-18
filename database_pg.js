@@ -231,7 +231,7 @@ Proto.query = function (request) {
             length = params.length;
         request.isValid = true;
         for (idx = 0; idx < length; idx += 1) {;
-            if (!request[idx]) {
+            if (!request[params[idx]]) {
                 request.isValid = false;
                 break;
             }
@@ -269,7 +269,7 @@ Proto.query = function (request) {
 		Proto.emit('result', response);
 	});
 	query_waypoints.on('end', function (result) {
-		response.count = result.rowCount;
+		response.count = result != undefined ? result.rowCount : 0;
 		console.log('[database]'.grey, 'query complete, found', result.rowCount);
 		Proto.emit('end', response);
 	});
