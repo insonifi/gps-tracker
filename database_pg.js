@@ -224,7 +224,6 @@ Proto.getAddress = function (req) {
 }
 
 Proto.query = function (request) {
-console.log(request);
   /*** prepare and validate query ***/
   var Query = function (request) {
         var params = ['begin', 'end', 'module_id'],
@@ -243,11 +242,13 @@ console.log(request);
         'module_id': request.module_id,
         'socket_id': request.socket_id
 		};
-        
+
+    console.log(Query);
     if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
         return;
     }
+    
     /*** check database connection ***/
     if (!Proto.client) {
         console.log('[database]'.grey, 'not ready yet'.red);

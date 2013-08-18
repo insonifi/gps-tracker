@@ -1,4 +1,4 @@
 [submodule "app"]
 	path = app
 	url = https://github.com/insonifi/gps-tracker-frontend
-	branch = master
+	branch = origin/master
