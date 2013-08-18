@@ -238,7 +238,7 @@ console.log(request);
             }
         }
         return request;
-    }(),
+    }(request),
     response = {
         'module_id': request.module_id,
         'socket_id': request.socket_id
