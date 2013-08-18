@@ -14,7 +14,7 @@ var colors = require('colors'),
 	auth = require('./pwdhash'),
 	i,
 	ip,
-	isTracked = {},
+	isTracked = null,
 	port,
 	hash,
 	vId,
@@ -65,6 +65,7 @@ database.on('modulelist-server', function (response) {
 		length = list.length;
 	console.log('[GPS]'.grey, 'updating tracked modules list:\n', list);
 	if (!list) {return; }
+    isTracked = {};
 	for (i = 0; i < length; i += 1) {
 		isTracked[list[i].module_id] = true;
 	}
@@ -92,12 +93,18 @@ app.on('error', function (err) {
 app.use(express.compress());
 /* app.use(express.logger()); */
 app.use(express.static(__dirname + '/app'));
+/*
 app.get('/', function (req, res) {
   res.redirect('/app')
 });
+*/
 app.post('/pushq', getBody, function (req, res, next) {
-    processor(req.body);
-    res.send(200);
+    if (isTracked) {
+        processor(req.body);
+        res.send(200);
+    } else {
+        res.send(503);
+    }
 })
 app.use(function (req, res, next) {
 	res.send(404, 'Sorry cant find that!');

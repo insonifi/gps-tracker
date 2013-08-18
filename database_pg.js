@@ -35,7 +35,7 @@ var colors = require('colors'),
 		//delete expired records if any
 		console.log('[database]'.grey, 'cleaning up');
 		Proto.client.query({
-			text: 'DELETE FROM waypoints WHERE timestamp <@ lseg(($1,0), ($2,0))',
+			text: 'DELETE FROM waypoints WHERE timestamp <@ lseg(\'($1,0)\', \'($2,0)\')',
 			values: [now - expire, now]
 		}, error);
 		Proto.client.query({text: 'VACUUM'}, error);
@@ -99,7 +99,7 @@ Proto.addRecord = function (gps_msg) {
 		insert = Proto.client.query({
 			text: 'INSERT INTO waypoints '
 				+ '(module_id, timestamp, coords, kph, track, magv) '
-				+ 'values($1, ($2, 0), ($3, $4), $5, $6, $7)',
+				+ 'values($1, \'($2, 0)\', \'($3, $4)\', $5, $6, $7)',
 			values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
 		}, function (err) {
 			if (err) {
@@ -194,7 +194,7 @@ Proto.setAddress = function(coords) {
 		update = Proto.client.query({
 			text: 'UPDATE waypoints SET '
 				+ 'address = $1'
-				+ 'WHERE coords ~= ($2, $3)',
+				+ 'WHERE coords ~= \'($2, $3)\'',
 			values: [address, lat, long]
 		}, error);
 	console.log('[database]'.grey, 'cache address:', address, '(', lat, long, ')');
@@ -207,7 +207,7 @@ Proto.getAddress = function (req) {
 		lat = req.coords.lat,
 		long = req.coords.long,
 		query = Proto.client.query({
-			text: 'SELECT address FROM waypoints WHERE coords ~= ($1, $2) AND address NOT NULL LIMIT 1',
+			text: 'SELECT address FROM waypoints WHERE coords ~= \'($1, $2)\' AND address NOT NULL LIMIT 1',
 			values: [lat, long]
 		}, error);
 	console.log('[database]'.grey, 'lookup address', '(', lat, long, ')')
@@ -258,7 +258,7 @@ console.log(request);
     }
 	/*** execute query ***/
 	var query_waypoints = Proto.client.query({
-		text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp <@ lseg(($2,0), ($3,0))',
+		text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp <@ lseg(\'($2,0)\', \'($3,0)\')',
 		values: [Query.module_id, Query.begin, Query.end]
 	}, error);
 
