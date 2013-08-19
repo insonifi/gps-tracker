@@ -259,7 +259,9 @@ Proto.query = function (request) {
     }
 	/*** execute query ***/
 	var query_waypoints = Proto.client.query({
-		text: 'SELECT * FROM waypoints WHERE module_id = $1 AND timestamp <@ lseg(POINT($2,0), POINT($3,0))',
+		text: 'SELECT module_id, timestamp[0], address, coords[0] AS \'lat\', coords[1] AS \'long\', kph, track, magv' 
+            + ' FROM waypoints'
+            + ' WHERE module_id = $1 AND timestamp <@ lseg(POINT($2,0), POINT($3,0))',
 		values: [Query.module_id, Query.begin, Query.end]
 	}, error);
 
