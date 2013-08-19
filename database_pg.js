@@ -243,7 +243,6 @@ Proto.query = function (request) {
         'socket_id': request.socket_id
 		};
 
-    console.log(Query);
     if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
         return;
@@ -259,7 +258,7 @@ Proto.query = function (request) {
     }
 	/*** execute query ***/
 	var query_waypoints = Proto.client.query({
-		text: 'SELECT module_id, timestamp[0], address, coords[0] AS \'lat\', coords[1] AS \'long\', kph, track, magv' 
+		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "long", kph, track, magv' 
             + ' FROM waypoints'
             + ' WHERE module_id = $1 AND timestamp <@ lseg(POINT($2,0), POINT($3,0))',
 		values: [Query.module_id, Query.begin, Query.end]
@@ -271,7 +270,7 @@ Proto.query = function (request) {
 		Proto.emit('result', response);
 	});
 	query_waypoints.on('end', function (result) {
-		response.count = result != undefined ? result.rowCount : 0;
+		response.count = result !== undefined ? result.rowCount : 0;
 		console.log('[database]'.grey, 'query complete, found', response.count);
 		Proto.emit('end', response);
 	});
