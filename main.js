@@ -151,12 +151,21 @@ io.sockets.on('connection', function (socket) {
 		processor(message);
 	});
 /* query */
-	global_socket.on('query', function (data) {
-		database.query({
+	global_socket.on('query-period', function (data) {
+		database.queryPeriod({
             'socket_id': socket.id,
 			'module_id': data.module_id,
-			'begin': data.start,
+			'start': data.start,
 			'end': data.end
+		});
+	});
+
+    global_socket.on('query-area', function (data) {
+		database.queryArea({
+            'socket_id': socket.id,
+			'module_id': data.module_id,
+			'coordsA': data.coordsA,
+			'coordsB': data.coordsB
 		});
 	});
 
