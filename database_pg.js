@@ -99,19 +99,23 @@ Proto.addRecord = function (gps_msg) {
 		insert = Proto.client.query({
 			text: 'INSERT INTO waypoints '
 				+ '(module_id, timestamp, coords, kph, track, magv) '
-				+ 'SELECT ($1 AS varchar), POINT($2, 0), POINT($3, $4), ($5 AS real), ($6 AS smallint), ($7 AS smallint) '
-				+ 'WHERE NOT EXISTS (SELECT 1 FROM waypoints WHERE module_id = $1 AND timestamp = $2)',
+				+ 'VALUES ($1, POINT($2, 0), POINT($3, $4), $5, $6, $7)',
 			values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
 		}, function (err) {
 			if (err) {
-                console.log('[database]'.grey, err);
-				/* var update = Proto.client.query({
-				 * 	text: 'UPDATE waypoints SET '
-				 * 		+ 'coords = POINT($3, $4), kph = $5, track = $6, magv = $7 '
-				 * 		+ 'WHERE module_id = $1 and timestamp ~= POINT($2, 0)',
-			     * 	values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
-				 * }, error);
-				 */
+			    var keyExists = '23505';
+                if (err.code === keyExists) {
+                    console.log('[database]'.grey, 'ignore duplicate');
+                    /* var update = Proto.client.query({
+                    * 	text: 'UPDATE waypoints SET '
+                    * 		+ 'coords = POINT($3, $4), kph = $5, track = $6, magv = $7 '
+                    * 		+ 'WHERE module_id = $1 and timestamp ~= POINT($2, 0)',
+                    * 	values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
+                    * }, error);
+                    */
+                } else {
+                    console.log('[database]'.grey, err);
+                }
 			}
 		});
 	Proto.emit('record', true);
