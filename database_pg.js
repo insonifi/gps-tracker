@@ -36,7 +36,7 @@ var colors = require('colors'),
 		console.log('[database]'.grey, 'cleaning up');
 		Proto.client.query({
 			text: 'DELETE FROM waypoints WHERE timestamp <@ lseg(POINT($1,0), POINT($2,0))',
-			values: [now - expire, now]
+			values: [0, now - expire]
 		}, error);
 		Proto.client.query({text: 'VACUUM'}, error);
 	},
@@ -99,16 +99,19 @@ Proto.addRecord = function (gps_msg) {
 		insert = Proto.client.query({
 			text: 'INSERT INTO waypoints '
 				+ '(module_id, timestamp, coords, kph, track, magv) '
-				+ 'VALUES ($1, POINT($2, 0), POINT($3, $4), $5, $6, $7)',
+				+ 'SELECT ($1 AS varchar), POINT($2, 0), POINT($3, $4), ($5 AS real), ($6 AS smallint, ($7 AS smallint) '
+				+ 'WHERE NOT EXISTS (SELECT 1 FROM waypoints WHERE module_id = $1 AND timestamp = $2)',
 			values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
 		}, function (err) {
 			if (err) {
-				var update = Proto.client.query({
-					text: 'UPDATE waypoints SET '
-						+ 'coords = POINT($3, $4), kph = $5, track = $6, magv = $7 '
-						+ 'WHERE module_id = $1 and timestamp ~= POINT($2, 0)',
-					values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
-				}, error);
+                console.log('[database]'.grey, err);
+				/* var update = Proto.client.query({
+				 * 	text: 'UPDATE waypoints SET '
+				 * 		+ 'coords = POINT($3, $4), kph = $5, track = $6, magv = $7 '
+				 * 		+ 'WHERE module_id = $1 and timestamp ~= POINT($2, 0)',
+			     * 	values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
+				 * }, error);
+				 */
 			}
 		});
 	Proto.emit('record', true);
@@ -139,10 +142,13 @@ Proto.updateModuleList = function (changes) {
 					values: [add_module.id, add_module.name]
 				}, function (err) {
 					if (err) {
-						update_list = Proto.client.query({
-							text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
-							values: [add_module.id, add_module.name]
-						}, error);
+                        var keyExists = '23505';
+                        if (err.code === keyExists) {
+                            update_list = Proto.client.query({
+                                text: 'UPDATE modules SET name = $2 WHERE module_id = $1',
+                                values: [add_module.id, add_module.name]
+                            }, error);
+					    }
 					}
 				});
 			}
