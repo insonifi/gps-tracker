@@ -15,7 +15,7 @@
     "colors": "",
     "socket.io": "",
     "pg": "",
-    "iron_mq": "",
+    "iron_mq": ""
   },
   "scripts": {
     "start": "node main.js"
