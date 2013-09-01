@@ -99,7 +99,7 @@ Proto.addRecord = function (gps_msg) {
 		insert = Proto.client.query({
 			text: 'INSERT INTO waypoints '
 				+ '(module_id, timestamp, coords, kph, track, magv) '
-				+ 'SELECT ($1 AS varchar), POINT($2, 0), POINT($3, $4), ($5 AS real), ($6 AS smallint, ($7 AS smallint) '
+				+ 'SELECT ($1 AS varchar), POINT($2, 0), POINT($3, $4), ($5 AS real), ($6 AS smallint), ($7 AS smallint) '
 				+ 'WHERE NOT EXISTS (SELECT 1 FROM waypoints WHERE module_id = $1 AND timestamp = $2)',
 			values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
 		}, function (err) {
