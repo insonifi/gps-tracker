@@ -30,7 +30,7 @@ var colors = require('colors'),
 			}, 2 * 1000); //retry in 2 sec;
 			return;
 		}
-        var expire = 2 * 3600 * 24 * 365,
+        var expire = 2 * 3600 * 1000 * 24 * 365, //two years
             now = (new Date()).valueOf();
 		//delete expired records if any
 		console.log('[database]'.grey, 'cleaning up');
