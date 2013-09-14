@@ -37,9 +37,9 @@ exports.parse = function (input) {
 			data[0].slice(4, 6)
 		))).valueOf()//store date as integer//.toISOString();//to store as ISO strings
 		//nmea.isValid = data[1] == 'A';
-		nmea.lat = ((((data[2] | 0) / 100) | 0) + (parseFloat(data[2]) % 100) * 0.0166666666667).toFixed(6);
+		nmea.lat = parseFloat(((data[2] / 100) + (data[2] % 100) * 0.0166666666667).toFixed(6));
 		if (data[3] === 'S') {nmea.lat = -nmea.lat; }
-		nmea.long = ((((data[4] | 0) / 100) | 0) + (parseFloat(data[4]) % 100) * 0.0166666666667).toFixed(6);
+		nmea.long = parseFloat(((data[4] / 100) + (data[4] % 100) * 0.0166666666667).toFixed(6));
 		if (data[5] === 'W') {nmea.long = -nmea.long; }
 		nmea.kph = (data[6] * 1.8519993258722454).toFixed(2);
 		nmea.track = data[7];
