@@ -41,7 +41,7 @@ exports.parse = function (input) {
 		//nmea.isValid = data[1] == 'A';
 		nmea.lat = parseFloat(((data[2].slice(0,2) | 0) + (data[2].slice(2) * one_min)).toFixed(6));
 		if (data[3] === 'S') {nmea.lat = -nmea.lat; }
-		nmea.long = parseFloat(((data[2].slice(0,2) | 0) + (data[2].slice(2) * one_min)).toFixed(6));
+		nmea.long = parseFloat(((data[4].slice(0,2) | 0) + (data[4].slice(2) * one_min)).toFixed(6));
 		if (data[5] === 'W') {nmea.long = -nmea.long; }
 		nmea.kph = (data[6] * knot_to_kph).toFixed(2);
 		nmea.track = data[7];
