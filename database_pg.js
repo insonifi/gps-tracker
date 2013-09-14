@@ -119,6 +119,7 @@ Proto.addRecord = function (gps_msg) {
 			}
 		});
 	Proto.emit('record', true);
+	console.info('[database]'.grey, 'record added', '(', g.module_id, g.lat, g.long, g.timestamp.toISOString(), ')');
 };
 
 Proto.updateModuleList = function (changes) {
@@ -339,10 +340,6 @@ Proto.queryArea = function (request) {
 		Proto.emit('end', response);
 	});
 };
-
-Proto.on('record', function () {
-	console.info('[database]'.grey, 'record added');
-});
 
 /** initial connect to Postgres */
 connect();
