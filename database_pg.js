@@ -119,7 +119,7 @@ Proto.addRecord = function (gps_msg) {
 			}
 		});
 	Proto.emit('record', true);
-	console.info('[database]'.grey, 'record added', '(', g.module_id, g.lat, g.long, g.timestamp.toISOString(), ')');
+	console.info('[database]'.grey, 'record added', '(', g.module_id, g.lat, g.long, (new Date(g.timestamp)).toISOString(), ')');
 };
 
 Proto.updateModuleList = function (changes) {
