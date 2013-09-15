@@ -118,8 +118,13 @@ Proto.addRecord = function (gps_msg) {
                 }
 			}
 		});
-	Proto.emit('record', true);
-	console.info('[database]'.grey, 'record added', '(', [g.module_id, g.lat, g.long, (new Date(g.timestamp)).toISOString()].toString().grey, ')');
+		insert.on('end', function (result) {
+		    /* insertion confirmed */
+		    Proto.emit('record', true);
+            console.info('[database]'.grey, result.rowCount, 'record added', 
+                '(', [g.module_id, g.lat, g.long, (new Date(g.timestamp)).toISOString()].toString().grey, ')'
+            );  
+		})
 };
 
 Proto.updateModuleList = function (changes) {
