@@ -30,14 +30,14 @@ exports.parse = function (input) {
     data = validatedStr.split(',');
     code = data.shift();
     if (code === 'GPRMC') {
-		nmea.timestamp = (new Date(
+		nmea.timestamp = (new Date(Date.UTC(
 			'20' + data[8].slice(4, 6),
 			+data[8].slice(2, 4) - 1,
 			data[8].slice(0, 2),
 			data[0].slice(0, 2),
 			data[0].slice(2, 4),
 			data[0].slice(4, 6)
-		)).valueOf()//store date as integer//.toISOString();//to store as ISO strings
+		))).valueOf()//store date as integer//.toISOString();//to store as ISO strings
 		//nmea.isValid = data[1] == 'A';
 		nmea.lat = parseFloat(((data[2].slice(0,2) | 0) + (data[2].slice(2) * one_min)).toFixed(6));
 		if (data[3] === 'S') {nmea.lat = -nmea.lat; }
