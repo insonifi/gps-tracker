@@ -285,10 +285,10 @@ Proto.queryPeriod = function (request) {
             Proto.emit('single-result', response);
         }
     });
-	query_waypoints.on('end-result', function (result) {
+	query_waypoints.on('end', function (result) {
 		response.count = result !== undefined ? result.rowCount : 0;
 		console.log('[database]'.grey, 'query complete, found', response.count);
-		Proto.emit('end', response);
+		Proto.emit('end-result', response);
 	});
 };
 
@@ -345,10 +345,10 @@ Proto.queryArea = function (request) {
             Proto.emit('single-result', response);
         }
     });
-	query_waypoints.on('end-result', function (result) {
+	query_waypoints.on('end', function (result) {
 		response.count = result !== undefined ? result.rowCount : 0;
 		console.log('[database]'.grey, 'query complete, found', response.count);
-		Proto.emit('end', response);
+		Proto.emit('end-result', response);
 	});
 };
 
