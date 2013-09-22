@@ -286,9 +286,6 @@ Proto.queryPeriod = function (request) {
             response.result = row;
             Proto.emit('single-result', response);
         }
-        if(request.type === 'complete') {
-            result.addRow(row);
-        }
     });
 	query_waypoints.on('end', function (result) {
 		response.count = result !== undefined ? result.rowCount : 0;
@@ -351,9 +348,6 @@ Proto.queryArea = function (request) {
         if(request.type === 'progressive') {
             response.result = row;
             Proto.emit('single-result', response);
-        }
-        if(request.type === 'complete') {
-            result.addRow(row);
         }
     });
 	query_waypoints.on('end', function (result) {
