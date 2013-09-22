@@ -240,7 +240,7 @@ Proto.getAddress = function (req) {
 Proto.queryPeriod = function (request) {
   /*** prepare and validate query ***/
   var Query = function (request) {
-        var params = ['start', 'end', 'module_id'],
+        var params = ['start', 'end', 'module_id', 'type'],
             idx,
             length = params.length;
         request.isValid = true;
@@ -295,7 +295,7 @@ Proto.queryPeriod = function (request) {
 Proto.queryArea = function (request) {
   /*** prepare and validate query ***/
   var Query = function (request) {
-        var params = ['coordsA', 'coordsB', 'module_id'],
+        var params = ['coordsA', 'coordsB', 'module_id', 'type'],
             idx,
             length = params.length;
         request.isValid = true;
