@@ -200,8 +200,11 @@ database.on('single-result', function (response) {
 });
 database.on('end-result', function (response) {
 	client_socket = socket_session[response.socket_id];
-	if (response.type === 'complete ') {
+	if (response.type === 'complete') {
         client_socket.emit('query-end', response.count);
+	}
+	if (response.type === 'progressive') {
+	    client_socket.emit('query-end', response.count);
 	}
 });
 database.on('send-address', function (response) {
