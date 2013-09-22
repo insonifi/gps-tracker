@@ -255,6 +255,7 @@ Proto.queryPeriod = function (request) {
     response = {
         'module_id': request.module_id,
         'socket_id': request.socket_id,
+        'result': [],
         'type': request.type
 		};
 
@@ -285,6 +286,9 @@ Proto.queryPeriod = function (request) {
             response.result = row;
             Proto.emit('single-result', response);
         }
+        if(request.type === 'complete') {
+            response.result.push[row];
+        }
     });
 	query_waypoints.on('end', function (result) {
 		response.count = result !== undefined ? result.rowCount : 0;
@@ -311,6 +315,7 @@ Proto.queryArea = function (request) {
     response = {
         'module_id': request.module_id,
         'socket_id': request.socket_id,
+        'result': [],
         'type': request.type
     };
 
@@ -345,6 +350,9 @@ Proto.queryArea = function (request) {
         if(request.type === 'progressive') {
             response.result = row;
             Proto.emit('single-result', response);
+        }
+        if(request.type === 'complete') {
+            response.result.push[row];
         }
     });
 	query_waypoints.on('end', function (result) {
