@@ -100,7 +100,7 @@ Proto.addRecord = function (gps_msg) {
 			text: 'INSERT INTO waypoints '
 				+ '(module_id, timestamp, coords, kph, track, magv) '
 				+ 'VALUES ($1, POINT($2, 0), POINT($3, $4), $5, $6, $7)',
-			values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
+			values: [g.module_id, g.timestamp, g.lat, g.lng, g.kph, g.track, g.magv]
 		}, function (err) {
 			if (err) {
                 var keyExists = '23505';
@@ -110,7 +110,7 @@ Proto.addRecord = function (gps_msg) {
                     * 	text: 'UPDATE waypoints SET '
                     * 		+ 'coords = POINT($3, $4), kph = $5, track = $6, magv = $7 '
                     * 		+ 'WHERE module_id = $1 and timestamp ~= POINT($2, 0)',
-                    * 	values: [g.module_id, g.timestamp, g.lat, g.long, g.kph, g.track, g.magv]
+                    * 	values: [g.module_id, g.timestamp, g.lat, g.lng, g.kph, g.track, g.magv]
                     * }, error);
                     */
                 } else {
@@ -123,7 +123,7 @@ Proto.addRecord = function (gps_msg) {
             Proto.emit('record', true);
             if (process.env.DEBUG_RECORD) {
                 console.info('[database]'.grey, result.rowCount, 'record added', 
-                    '(', [g.module_id, g.lat, g.long, (new Date(g.timestamp)).toISOString()].toString().grey, ')'
+                    '(', [g.module_id, g.lat, g.lng, (new Date(g.timestamp)).toISOString()].toString().grey, ')'
                 );
 		    }
 		})
@@ -211,9 +211,9 @@ Proto.setAddress = function(coords) {
 			text: 'UPDATE waypoints SET '
 				+ 'address = $1'
 				+ 'WHERE coords ~= POINT($2, $3)',
-			values: [address, coords.lat, coords.long]
+			values: [address, coords.lat, coords.lng]
 		}, error);
-	console.log('[database]'.grey, 'cache address:', address, '(', coords.lat, coords.long, ')');
+	console.log('[database]'.grey, 'cache address:', address, '(', coords.lat, coords.lng, ')');
 }
 
 Proto.getAddress = function (req) {
@@ -222,16 +222,16 @@ Proto.getAddress = function (req) {
 		},
 		query = Proto.client.query({
 			text: 'SELECT address FROM waypoints WHERE coords ~= POINT($1, $2) AND address != \'\' LIMIT 1',
-			values: [req.coords.lat, req.coords.long]
+			values: [req.coords.lat, req.coords.lng]
 		}, error);
-	console.log('[database]'.grey, 'lookup address', '(', req.coords.lat, req.coords.long, ')')
+	console.log('[database]'.grey, 'lookup address', '(', req.coords.lat, req.coords.lng, ')')
 	query.on('end', function (result) {
 		if (result.rowCount > 0) {
 			response.coords.address = result.rows[0].address;
 			Proto.emit('send-address', response);
-			console.log('[database]'.grey, 'found address', '(', req.coords.lat, req.coords.long, ')');
+			console.log('[database]'.grey, 'found address', '(', req.coords.lat, req.coords.lng, ')');
 		} else {
-			console.log('[database]'.grey, 'no address in database', '(', req.coords.lat, req.coords.long, ')');
+			console.log('[database]'.grey, 'no address in database', '(', req.coords.lat, req.coords.lng, ')');
 			mapApi.emit('lookup-address', req);
 		}
 	});
@@ -274,7 +274,7 @@ Proto.queryPeriod = function (request) {
     }
 	/*** execute query ***/
 	var query_waypoints = Proto.client.query({
-		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "long", kph, track, magv' 
+		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "lng", kph, track, magv' 
             + ' FROM waypoints'
             + ' WHERE module_id = $1 AND timestamp <@ lseg(POINT($2,0), POINT($3,0))',
 		values: [Query.module_id, Query.start, Query.end]
@@ -335,16 +335,16 @@ Proto.queryArea = function (request) {
     }
 	/*** execute query ***/
 	var query_waypoints = Proto.client.query({
-		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "long", kph, track, magv' 
+		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "lng", kph, track, magv' 
             + ' FROM waypoints'
             + ' WHERE module_id = $1 AND coords <@ box(POINT($2,$3), POINT($4,$5))',
-		values: [Query.module_id, Query.coordsA.lat, Query.coordsA.long, Query.coordsB.lat, Query.coordsB.long]
+		values: [Query.module_id, Query.coordsA.lat, Query.coordsA.lng, Query.coordsB.lat, Query.coordsB.lng]
 	}, error);
 
 	console.log('[database]'.grey, 'Query:',
         Query.module_id, '(',
-            Query.coordsA.lat, ',', Query.coordsA.long,
-            Query.coordsB.lat, ',', Query.coordsB.long,
+            Query.coordsA.lat, ',', Query.coordsA.lng,
+            Query.coordsB.lat, ',', Query.coordsB.lng,
         '), type:', Query.type
     );
     query_waypoints.on('row', function (row) {
