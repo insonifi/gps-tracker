@@ -254,7 +254,8 @@ Proto.queryPeriod = function (request) {
     }(request),
     response = {
         'module_id': request.module_id,
-        'socket_id': request.socket_id
+        'socket_id': request.socket_id,
+        'type': request.type
 		};
 
     if (!Query.isValid) {
@@ -309,7 +310,8 @@ Proto.queryArea = function (request) {
     }(request),
     response = {
         'module_id': request.module_id,
-        'socket_id': request.socket_id
+        'socket_id': request.socket_id,
+        'type': request.type
     };
 
     if (!Query.isValid) {
