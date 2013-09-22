@@ -281,17 +281,18 @@ Proto.queryPeriod = function (request) {
 	}, error);
 
 	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.start, '..', Query.end, '), type:', Query.type);
-    query_waypoints.on('row', function (row) {
+    query_waypoints.on('row', function (row, result) {
         if(request.type === 'progressive') {
             response.result = row;
             Proto.emit('single-result', response);
         }
         if(request.type === 'complete') {
-            response.result.push[row];
+            result.addRow(row);
         }
     });
 	query_waypoints.on('end', function (result) {
 		response.count = result !== undefined ? result.rowCount : 0;
+		response.result = result.rows;
 		console.log('[database]'.grey, 'query complete, found', response.count);
 		Proto.emit('end-result', response);
 	});
@@ -352,11 +353,12 @@ Proto.queryArea = function (request) {
             Proto.emit('single-result', response);
         }
         if(request.type === 'complete') {
-            response.result.push[row];
+            result.addRow(row);
         }
     });
 	query_waypoints.on('end', function (result) {
 		response.count = result !== undefined ? result.rowCount : 0;
+		response.result = result.rows;
 		console.log('[database]'.grey, 'query complete, found', response.count);
 		Proto.emit('end-result', response);
 	});
