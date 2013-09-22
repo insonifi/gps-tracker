@@ -156,7 +156,8 @@ io.sockets.on('connection', function (socket) {
             'socket_id': socket.id,
 			'module_id': data.module_id,
 			'start': data.start,
-			'end': data.end
+			'end': data.end,
+			'type': data.type || 'complete'
 		});
 	});
 
@@ -165,7 +166,8 @@ io.sockets.on('connection', function (socket) {
             'socket_id': socket.id,
 			'module_id': data.module_id,
 			'coordsA': data.coordsA,
-			'coordsB': data.coordsB
+			'coordsB': data.coordsB,
+			'type': data.type || 'complete'
 		});
 	});
 
@@ -192,13 +194,15 @@ io.sockets.on('connection', function (socket) {
 	});
 });
 
-database.on('result', function (response) {
+database.on('single-result', function (response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('query-waypoint', response.result);
 });
-database.on('end', function (response) {
+database.on('end-result', function (response) {
 	client_socket = socket_session[response.socket_id];
-	client_socket.emit('query-end', response.count);
+	if (response.type === 'complete ') {
+        client_socket.emit('query-end', response.count);
+	}
 });
 database.on('send-address', function (response) {
 	client_socket = socket_session[response.socket_id];
