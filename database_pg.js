@@ -278,7 +278,7 @@ Proto.queryPeriod = function (request) {
 		values: [Query.module_id, Query.start, Query.end]
 	}, error);
 
-	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.start, '..', Query.end, ')');
+	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.start, '..', Query.end, '), type:', Query.type);
     query_waypoints.on('row', function (row) {
         response.result = row;
         if(request.type === 'progressive') {
@@ -337,7 +337,7 @@ Proto.queryArea = function (request) {
         Query.module_id, '(',
             Query.coordsA.lat, ',', Query.coordsA.long,
             Query.coordsB.lat, ',', Query.coordsB.long,
-        ')'
+        '), type:', Query.type
     );
     query_waypoints.on('row', function (row) {
         response.result = row;
