@@ -257,7 +257,8 @@ Proto.queryPeriod = function (request) {
         'socket_id': request.socket_id,
         'result': [],
         'chunks': request.chunks
-	};
+	},
+	size = 0;
 
     if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
