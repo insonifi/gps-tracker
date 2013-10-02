@@ -196,7 +196,7 @@ io.sockets.on('connection', function (socket) {
 
 database.on('chunk-result', function (response) {
 	client_socket = socket_session[response.socket_id];
-	client_socket.emit('query-waypoint', response.result);
+	client_socket.emit('query-chunk', response.result);
 });
 database.on('end-result', function (response) {
 	client_socket = socket_session[response.socket_id];
