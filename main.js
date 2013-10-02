@@ -157,7 +157,7 @@ io.sockets.on('connection', function (socket) {
 			'module_id': data.module_id,
 			'start': data.start,
 			'end': data.end,
-			'type': data.type || 'complete'
+			'chunks': data.chunks
 		});
 	});
 
@@ -167,7 +167,7 @@ io.sockets.on('connection', function (socket) {
 			'module_id': data.module_id,
 			'coordsA': data.coordsA,
 			'coordsB': data.coordsB,
-			'type': data.type || 'complete'
+			'chunks': data.chunks
 		});
 	});
 
@@ -194,18 +194,13 @@ io.sockets.on('connection', function (socket) {
 	});
 });
 
-database.on('single-result', function (response) {
+database.on('chunk-result', function (response) {
 	client_socket = socket_session[response.socket_id];
 	client_socket.emit('query-waypoint', response.result);
 });
 database.on('end-result', function (response) {
 	client_socket = socket_session[response.socket_id];
-	if (response.type === 'complete') {
-        client_socket.emit('query-end', response);
-	}
-	if (response.type === 'progressive') {
-        client_socket.emit('query-end', response.count);
-	}
+    client_socket.emit('query-end', response);
 });
 database.on('send-address', function (response) {
 	client_socket = socket_session[response.socket_id];

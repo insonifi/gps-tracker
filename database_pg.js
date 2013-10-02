@@ -71,6 +71,25 @@ var colors = require('colors'),
 		}, error);
 		Proto.ready = true;
 		Proto.emit('connected');
+	},
+	queryRow = function (row, result) {
+        if (request.chunks ===0 ) {
+            result.addRow(row);
+        } else {
+            response.result.push(row);
+            counter += 1;
+            if (counter === request.chunks) {
+                response.count = counter;
+                Proto.emit('chunk-result', response);
+                counter = 0;
+            }
+        } 
+    },
+    queryEnd = function (result) {
+		response.count = result !== undefined ? result.rowCount : 0;
+		response.result = result.rows;
+		console.log('[database]'.grey, 'query complete, found', response.count);
+		Proto.emit('end-result', response);
 	};
 
 pg.on('error', function (err) {
@@ -240,7 +259,7 @@ Proto.getAddress = function (req) {
 Proto.queryPeriod = function (request) {
   /*** prepare and validate query ***/
   var Query = function (request) {
-        var params = ['start', 'end', 'module_id', 'type'],
+        var params = ['start', 'end', 'module_id', 'chunks'],
             idx,
             length = params.length;
         request.isValid = true;
@@ -281,24 +300,14 @@ Proto.queryPeriod = function (request) {
 	}, error);
 
 	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.start, '..', Query.end, '), type:', Query.type);
-    query_waypoints.on('row', function (row, result) {
-        if(request.type === 'progressive') {
-            response.result = row;
-            Proto.emit('single-result', response);
-        }
-    });
-	query_waypoints.on('end', function (result) {
-		response.count = result !== undefined ? result.rowCount : 0;
-		response.result = result.rows;
-		console.log('[database]'.grey, 'query complete, found', response.count);
-		Proto.emit('end-result', response);
-	});
+    query_waypoints.on('row', queryRow;
+	query_waypoints.on('end', queryEnd);
 };
 
 Proto.queryArea = function (request) {
   /*** prepare and validate query ***/
   var Query = function (request) {
-        var params = ['coordsA', 'coordsB', 'module_id', 'type'],
+        var params = ['coordsA', 'coordsB', 'module_id', 'chunks'],
             idx,
             length = params.length;
         request.isValid = true;
@@ -315,7 +324,8 @@ Proto.queryArea = function (request) {
         'socket_id': request.socket_id,
         'result': [],
         'type': request.type
-    };
+    },
+    counter = 0;
 
     if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
@@ -344,18 +354,8 @@ Proto.queryArea = function (request) {
             Query.coordsB.lat, ',', Query.coordsB.lng,
         '), type:', Query.type
     );
-    query_waypoints.on('row', function (row) {
-        if(request.type === 'progressive') {
-            response.result = row;
-            Proto.emit('single-result', response);
-        }
-    });
-	query_waypoints.on('end', function (result) {
-		response.count = result !== undefined ? result.rowCount : 0;
-		response.result = result.rows;
-		console.log('[database]'.grey, 'query complete, found', response.count);
-		Proto.emit('end-result', response);
-	});
+    query_waypoints.on('row', queryRow);
+	query_waypoints.on('end', queryEnd);
 };
 
 /** initial connect to Postgres */
