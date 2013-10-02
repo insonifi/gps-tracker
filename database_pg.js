@@ -300,7 +300,7 @@ Proto.queryPeriod = function (request) {
 	}, error);
 
 	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.start, '..', Query.end, '), type:', Query.type);
-    query_waypoints.on('row', queryRow;
+    query_waypoints.on('row', queryRow);
 	query_waypoints.on('end', queryEnd);
 };
 
