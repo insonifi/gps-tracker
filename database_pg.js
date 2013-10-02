@@ -71,25 +71,6 @@ var colors = require('colors'),
 		}, error);
 		Proto.ready = true;
 		Proto.emit('connected');
-	},
-	queryRow = function (row, result) {
-        if (response.chunks === 0) {
-            result.addRow(row);
-        } else {
-            response.result.push(row);
-            size += 1;
-            if (size === response.chunks) {
-                response.count = counter;
-                Proto.emit('chunk-result', response);
-                size = 0;
-            }
-        } 
-    },
-    queryEnd = function (result) {
-		response.count = result !== undefined ? result.rowCount : 0;
-		response.result = result !== undefined ? response.result : result.rows ;
-		console.log('[database]'.grey, 'query complete, found', response.count);
-		Proto.emit('end-result', response);
 	};
 
 pg.on('error', function (err) {
@@ -301,11 +282,24 @@ Proto.queryPeriod = function (request) {
 
 	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.start, '..', Query.end, '), chunk size:', Query.chunks);
     query_waypoints.on('row', function (row, result) {
-        queryRow.call(this, row, result);
+        if (response.chunks === 0) {
+            result.addRow(row);
+        } else {
+            response.result.push(row);
+            size += 1;
+            if (size === response.chunks) {
+                response.count = counter;
+                Proto.emit('chunk-result', response);
+                size = 0;
+            }
+        } 
     });
 	query_waypoints.on('end', function (result) {
-	    queryEnd.call(this, result);
-    });
+		response.count = result !== undefined ? result.rowCount : 0;
+		response.result = result !== undefined ? response.result : result.rows ;
+		console.log('[database]'.grey, 'query complete, found', response.count);
+		Proto.emit('end-result', response);
+	});
 };
 
 Proto.queryArea = function (request) {
@@ -359,11 +353,24 @@ Proto.queryArea = function (request) {
         '), chunk size:', Query.chunks
     );
     query_waypoints.on('row', function (row, result) {
-        queryRow.call(this, row, result);
+        if (response.chunks === 0) {
+            result.addRow(row);
+        } else {
+            response.result.push(row);
+            size += 1;
+            if (size === response.chunks) {
+                response.count = counter;
+                Proto.emit('chunk-result', response);
+                size = 0;
+            }
+        } 
     });
 	query_waypoints.on('end', function (result) {
-	    queryEnd.call(this, result);
-    });
+		response.count = result !== undefined ? result.rowCount : 0;
+		response.result = result !== undefined ? response.result : result.rows ;
+		console.log('[database]'.grey, 'query complete, found', response.count);
+		Proto.emit('end-result', response);
+	});
 };
 
 /** initial connect to Postgres */
