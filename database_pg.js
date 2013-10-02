@@ -73,15 +73,15 @@ var colors = require('colors'),
 		Proto.emit('connected');
 	},
 	queryRow = function (row, result) {
-        if (request.chunks ===0 ) {
+        if (response.chunks === 0) {
             result.addRow(row);
         } else {
             response.result.push(row);
-            counter += 1;
-            if (counter === request.chunks) {
+            size += 1;
+            if (size === response.chunks) {
                 response.count = counter;
                 Proto.emit('chunk-result', response);
-                counter = 0;
+                size = 0;
             }
         } 
     },
@@ -275,8 +275,8 @@ Proto.queryPeriod = function (request) {
         'module_id': request.module_id,
         'socket_id': request.socket_id,
         'result': [],
-        'type': request.type
-		};
+        'chunks': request.chunks
+	};
 
     if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
@@ -299,9 +299,13 @@ Proto.queryPeriod = function (request) {
 		values: [Query.module_id, Query.start, Query.end]
 	}, error);
 
-	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.start, '..', Query.end, '), type:', Query.type);
-    query_waypoints.on('row', queryRow);
-	query_waypoints.on('end', queryEnd);
+	console.log('[database]'.grey, 'Query:', Query.module_id, '(', Query.start, '..', Query.end, '), chunk size:', Query.chunks);
+    query_waypoints.on('row', function (row, result) {
+        queryRow.call(this, row, result);
+    });
+	query_waypoints.on('end', function (result) {
+	    queryEnd.call(this, result);
+    });
 };
 
 Proto.queryArea = function (request) {
@@ -323,9 +327,9 @@ Proto.queryArea = function (request) {
         'module_id': request.module_id,
         'socket_id': request.socket_id,
         'result': [],
-        'type': request.type
-    },
-    counter = 0;
+        'chunks': request.chunks
+	},
+    size = 0;
 
     if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
@@ -352,10 +356,14 @@ Proto.queryArea = function (request) {
         Query.module_id, '(',
             Query.coordsA.lat, ',', Query.coordsA.lng,
             Query.coordsB.lat, ',', Query.coordsB.lng,
-        '), type:', Query.type
+        '), chunk size:', Query.chunks
     );
-    query_waypoints.on('row', queryRow);
-	query_waypoints.on('end', queryEnd);
+    query_waypoints.on('row', function (row, result) {
+        queryRow.call(this, row, result);
+    });
+	query_waypoints.on('end', function (result) {
+	    queryEnd.call(this, result);
+    });
 };
 
 /** initial connect to Postgres */
