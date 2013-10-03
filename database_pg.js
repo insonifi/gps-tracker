@@ -257,8 +257,7 @@ Proto.queryPeriod = function (request) {
         'socket_id': request.socket_id,
         'result': [],
         'chunks': request.chunks
-	},
-	size = 0;
+	};
 
     if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
@@ -287,11 +286,9 @@ Proto.queryPeriod = function (request) {
             result.addRow(row);
         } else {
             response.result.push(row);
-            size += 1;
-            if (size === response.chunks) {
-                response.count = counter;
+            if (response.result.length === response.chunks) {
                 Proto.emit('chunk-result', response);
-                size = 0;
+                response.result = [];
             }
         } 
     });
@@ -323,8 +320,7 @@ Proto.queryArea = function (request) {
         'socket_id': request.socket_id,
         'result': [],
         'chunks': request.chunks
-	},
-    size = 0;
+	};
 
     if (!Query.isValid) {
         console.log('[database]'.grey, 'query invalid', Query);
@@ -358,11 +354,9 @@ Proto.queryArea = function (request) {
             result.addRow(row);
         } else {
             response.result.push(row);
-            size += 1;
-            if (size === response.chunks) {
-                response.count = counter;
+            if (response.result.length === response.chunks) {
                 Proto.emit('chunk-result', response);
-                size = 0;
+                response.result = [];
             }
         } 
     });
@@ -382,4 +376,3 @@ init_db();
 setInterval(cleanup, 1000 * 3600 * 24);
 
 module.exports = Proto;
-
