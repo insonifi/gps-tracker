@@ -362,7 +362,7 @@ Proto.queryArea = function (request) {
     });
 	query_waypoints.on('end', function (result) {
 		response.count = result !== undefined ? result.rowCount : 0;
-		response.result = result !== undefined ? response.result : result.rows ;
+		response.result = response.result.length === 0 ? response.result : result.rows ;
 		console.log('[database]'.grey, 'query complete, found', response.count);
 		Proto.emit('end-result', response);
 	});

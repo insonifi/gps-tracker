@@ -200,7 +200,7 @@ database.on('chunk-result', function (response) {
 });
 database.on('end-result', function (response) {
 	client_socket = socket_session[response.socket_id];
-    client_socket.emit('query-end', response);
+    client_socket.emit('query-end', response.result);
 });
 database.on('send-address', function (response) {
 	client_socket = socket_session[response.socket_id];
