@@ -2,7 +2,7 @@
 import socket
 import sys
 import time
-from random import randint
+from random import random
 
 def checksum(line):
     """
@@ -14,7 +14,13 @@ def checksum(line):
         s ^= ord(c)
     return '%02x' % s
 
-def generateNmea():
+def newCoord(last, bound):
+    while True:
+        new = last + (random() - 0.5) / 3
+        if bound[0] < new and new < bound[1]:
+            return new
+
+def generateNmea(in_x, in_y):
     """
     (None) -> str
     Return valid GPRMC message for Latvia region
@@ -23,9 +29,9 @@ def generateNmea():
     min = '%02d' % time.gmtime().tm_min
     sec = '%02d' % time.gmtime().tm_sec
 #     Generate coordinates somewhere in Latvian region.
-    x = '565%d.%03d' % (randint(2, 4), randint(0, 999))
-    y = '0240%d.%03d' % (randint(5,7), randint(0, 999))
-    kph = '%03d' % randint(0, 100)
+    x = '%08.3f' % in_x
+    y = '%08.3f' % in_y
+    kph = '%05.1f' % (random() * 100)
     dd = '%02d' % time.gmtime().tm_mday
     mm = '%02d' % time.gmtime().tm_mon
     yy = str(time.gmtime().tm_year)[2:]
@@ -44,7 +50,15 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, int(PORT)))
 s.send(bytearray('I' + ID, 'utf8'))
 time.sleep(1)
+xbound = (5650.000, 5660.000)
+ybound = (2395.000, 2420.000)
+x = 5655
+y = 2405
 print('send from ID {0} to {1}:{2}'.format(ID, HOST, PORT))
 while True:
-    s.send(bytearray(generateNmea(), 'utf8'))
+    x = newCoord(x, xbound)
+    y = newCoord(y, ybound)
+    nmea = generateNmea(x, y) 
+    s.send(bytearray(nmea, 'utf8'))
+    print(nmea)
     time.sleep(1)

@@ -21,6 +21,7 @@ exports.parse = function (input) {
 	var validatedStr = validate_nmea(input),
 		nmea = {},
 		data = [],
+		coord = [],
 		one_min = 0.0166666666667,
 		knot_to_kph = 1.8519993258722454,
 		code= '';
@@ -39,9 +40,12 @@ exports.parse = function (input) {
 			data[0].slice(4, 6)
 		))).valueOf()//store date as integer//.toISOString();//to store as ISO strings
 		//nmea.isValid = data[1] == 'A';
-		nmea.lat = parseFloat(((data[2].slice(0,2) | 0) + (data[2].slice(2) * one_min)).toFixed(6));
+		console.log(data[2], data[4])
+		coord = data[2].split('.');
+		nmea.lat = parseFloat(((coord[0] | 0) + (coord[1] * one_min)).toFixed(6));
 		if (data[3] === 'S') {nmea.lat = -nmea.lat; }
-		nmea.lng = parseFloat(((data[4].slice(0,2) | 0) + (data[4].slice(2) * one_min)).toFixed(6));
+		coord = data[4].split('.');
+		nmea.lng = parseFloat(((coord[0] | 0) + (coord[1] * one_min)).toFixed(6));
 		if (data[5] === 'W') {nmea.long = -nmea.long; }
 		nmea.kph = (data[6] * knot_to_kph).toFixed(2);
 		nmea.track = data[7];
