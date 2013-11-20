@@ -274,7 +274,7 @@ Proto.queryPeriod = function (request) {
     }
 	/*** execute query ***/
 	var query_waypoints = Proto.client.query({
-		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "lng", kph, track, magv' 
+		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "lng", kph, track' 
             + ' FROM waypoints'
             + ' WHERE module_id = $1 AND timestamp <@ lseg(POINT($2,0), POINT($3,0))',
 		values: [Query.module_id, Query.start, Query.end]
@@ -337,7 +337,7 @@ Proto.queryArea = function (request) {
     }
 	/*** execute query ***/
 	var query_waypoints = Proto.client.query({
-		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "lng", kph, track, magv' 
+		text: 'SELECT module_id, timestamp[0], address, coords[0] AS "lat", coords[1] AS "lng", kph, track' 
             + ' FROM waypoints'
             + ' WHERE module_id = $1 AND coords <@ box(POINT($2,$3), POINT($4,$5))',
 		values: [Query.module_id, Query.coordsA.lat, Query.coordsA.lng, Query.coordsB.lat, Query.coordsB.lng]
