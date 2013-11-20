@@ -57,7 +57,7 @@ var colors = require('colors'),
 				+ 'address	    varchar(100),'
 				+ 'coords	    point,'
 				+ 'kph		    real,'
-				+ 'track	    real,'
+				+ 'track	    real'
 				/* + 'magv		    smallint' */
 				+ ')'
 		}, error);
