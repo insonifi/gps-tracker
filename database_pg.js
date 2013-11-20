@@ -57,8 +57,8 @@ var colors = require('colors'),
 				+ 'address	    varchar(100),'
 				+ 'coords	    point,'
 				+ 'kph		    real,'
-				+ 'track	    smallint,'
-				+ 'magv		    smallint'
+				+ 'track	    real,'
+				/* + 'magv		    smallint' */
 				+ ')'
 		}, error);
 		Proto.client.query({
@@ -98,9 +98,9 @@ Proto.addRecord = function (gps_msg) {
 	    /* insert new waypoint */
 		insert = Proto.client.query({
 			text: 'INSERT INTO waypoints '
-				+ '(module_id, timestamp, coords, kph, track, magv) '
-				+ 'VALUES ($1, POINT($2, 0), POINT($3, $4), $5, $6, $7)',
-			values: [g.module_id, g.timestamp, g.lat, g.lng, g.kph, g.track, g.magv]
+				+ '(module_id, timestamp, coords, kph, track) '
+				+ 'VALUES ($1, POINT($2, 0), POINT($3, $4), $5, $6)',
+			values: [g.module_id, g.timestamp, g.lat, g.lng, g.kph, g.track]
 		}, function (err) {
 			if (err) {
                 var keyExists = '23505';
