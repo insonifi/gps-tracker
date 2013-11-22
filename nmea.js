@@ -40,12 +40,10 @@ exports.parse = function (input) {
 			data[0].slice(4, 6)
 		))).valueOf()//store date as integer//.toISOString();//to store as ISO strings
 		//nmea.isValid = data[1] == 'A';
-		console.log(data[2], data[4])
-		coord = data[2].split('.');
-		nmea.lat = parseFloat(((coord[0] | 0) + (coord[1] * one_min)).toFixed(6));
+		console.log(+data[2].slice(0, -6) + (+data[2].slice(-6) * one_min));
+		nmea.lat = ((+data[2].slice(0, -6)) + (+data[2].slice(-6) * one_min)).toFixed(6);
 		if (data[3] === 'S') {nmea.lat = -nmea.lat; }
-		coord = data[4].split('.');
-		nmea.lng = parseFloat(((coord[0] | 0) + (coord[1] * one_min)).toFixed(6));
+		nmea.lng = ((+data[4].slice(0, -6)) + (+data[4].slice(-6) * one_min)).toFixed(6);;
 		if (data[5] === 'W') {nmea.long = -nmea.long; }
 		nmea.kph = (data[6] * knot_to_kph).toFixed(2);
 		nmea.track = data[7];
