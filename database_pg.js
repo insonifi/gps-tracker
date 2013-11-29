@@ -103,19 +103,19 @@ Proto.addRecord = function (gps_msg) {
 			values: [g.module_id, g.timestamp, g.lat, g.lng, g.kph, g.track]
 		}, function (err) {
 			if (err) {
-                var keyExists = '23505';
-                if (err.code === keyExists) {
-                    console.log('[database]'.grey, 'ignore duplicate');
-                    /* var update = Proto.client.query({
-                    * 	text: 'UPDATE waypoints SET '
-                    * 		+ 'coords = POINT($3, $4), kph = $5, track = $6, magv = $7 '
-                    * 		+ 'WHERE module_id = $1 and timestamp ~= POINT($2, 0)',
-                    * 	values: [g.module_id, g.timestamp, g.lat, g.lng, g.kph, g.track, g.magv]
-                    * }, error);
-                    */
-                } else {
-                    console.log('[database]'.grey, err);
-                }
+            var keyExists = '23505';
+            if (err.code === keyExists) {
+                console.log('[database]'.grey, 'ignore duplicate');
+                /* var update = Proto.client.query({
+                * 	text: 'UPDATE waypoints SET '
+                * 		+ 'coords = POINT($3, $4), kph = $5, track = $6, magv = $7 '
+                * 		+ 'WHERE module_id = $1 and timestamp ~= POINT($2, 0)',
+                * 	values: [g.module_id, g.timestamp, g.lat, g.lng, g.kph, g.track, g.magv]
+                * }, error);
+                */
+            } else {
+                console.log('[database]'.grey, err);
+            }
 			}
 		});
 		insert.on('end', function (result) {
