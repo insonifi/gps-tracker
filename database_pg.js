@@ -240,13 +240,23 @@ Proto.getAddress = function (req) {
 Proto.queryPeriod = function (request) {
   /*** prepare and validate query ***/
   var Query = function (request) {
-        var params = ['start', 'end', 'module_id', 'chunks'],
-            idx,
-            length = params.length;
+        var params = {start: 'number',
+                end: 'number',
+                module_id: 'string',
+                chunks: 'number'
+            },
+            param;
         request.isValid = true;
-        for (idx = 0; idx < length; idx += 1) {;
-            if (!request[params[idx]]) {
+        for (param in params) {;
+            if (request.hasOwnProperty(param)) {
+                if (typeof(request[param]) !== params[param]) {
+                    request.isValid = false;
+                    console.log('[database]'.grey, 'request parameter'.red, param, 'is not'.red, params[param]);
+                    break;    
+                }
+            } else {
                 request.isValid = false;
+                console.log('[database]'.grey, 'request has no'.red, param);
                 break;
             }
         }
@@ -303,13 +313,23 @@ Proto.queryPeriod = function (request) {
 Proto.queryArea = function (request) {
   /*** prepare and validate query ***/
   var Query = function (request) {
-        var params = ['coordsA', 'coordsB', 'module_id', 'chunks'],
-            idx,
-            length = params.length;
+        var params = {coordsA: 'number',
+                coordsB: 'number',
+                module_id: 'string',
+                chunks: 'number'
+            },
+            param;
         request.isValid = true;
-        for (idx = 0; idx < length; idx += 1) {;
-            if (!request[params[idx]]) {
+        for (param in params) {;
+            if (request.hasOwnProperty(param)) {
+                if (typeof(request[param]) !== params[param]) {
+                    request.isValid = false;
+                    console.log('[database]'.grey, 'request parameter'.red, param, 'is not'.red, params[param]);
+                    break;    
+                }
+            } else {
                 request.isValid = false;
+                console.log('[database]'.grey, 'request has no'.red, param);
                 break;
             }
         }
