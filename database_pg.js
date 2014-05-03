@@ -67,7 +67,8 @@ var colors = require('colors'),
 		Proto.client.query({
 			text: 'CREATE TABLE modules ('
 				+ 'module_id	varchar(20) PRIMARY KEY,'
-				+ 'name		    varchar(20))'
+				+ 'name		    varchar(10),'
+				+ 'description  varchar(30))'
 		}, error);
 		Proto.ready = true;
 		Proto.emit('connected');
